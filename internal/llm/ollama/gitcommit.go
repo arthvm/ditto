@@ -26,7 +26,7 @@ type generateResponseBody struct {
 	Response string `json:"response"`
 }
 
-func GenerateGitCommit(ctx context.Context, diff string) (string, error) {
+func GenerateCommitMessage(ctx context.Context, diff string) (string, error) {
 	baseUrl, exists := os.LookupEnv("OLLAMA_HOST")
 	if !exists {
 		baseUrl = "http://localhost:11434"

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/arthvm/ditto/internal/git"
-	"github.com/arthvm/ditto/internal/llm/ollama"
+	"github.com/arthvm/ditto/internal/llm/gemini"
 )
 
 var commitCmd = &cobra.Command{
@@ -36,7 +36,7 @@ var commitCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		msg, err := ollama.GenerateGitCommit(cmd.Context(), diff)
+		msg, err := gemini.GenerateCommitMessage(cmd.Context(), diff)
 		if err != nil {
 			return fmt.Errorf("generate git commit: %w", err)
 		}
