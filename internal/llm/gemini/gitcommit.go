@@ -69,6 +69,14 @@ func init() {
 	llm.Register("gemini", &provider{
 		model: GeminiPro,
 	})
+
+	llm.Register("gemini-flash", &provider{
+		model: GeminiFlash,
+	})
+
+	llm.Register("gemini-flash-lite", &provider{
+		model: GeminiFlashLite,
+	})
 }
 
 func (p *provider) GenerateCommitMessage(
