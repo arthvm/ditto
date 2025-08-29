@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/arthvm/ditto/git"
+	"github.com/arthvm/ditto/internal/git"
 )
 
 var commitCmd = &cobra.Command{
