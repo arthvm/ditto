@@ -4,6 +4,7 @@ Copyright © 2025 Arthur Mariano
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -12,7 +13,10 @@ import (
 
 	"github.com/arthvm/ditto/internal/git"
 	"github.com/arthvm/ditto/internal/llm/gemini"
+	"github.com/arthvm/ditto/internal/llm/ollama"
 )
+
+type ProviderFunc func(context.Context, string, string) (string, error)
 
 var commitCmd = &cobra.Command{
 	Use:   "commit",
@@ -31,6 +35,21 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get prompt flag: %w", err)
 		}
 
+		provider, err := cmd.Flags().GetString(providerFlagName)
+		if err != nil {
+			return fmt.Errorf("get provider flag: %w", err)
+		}
+
+		var providerFunc ProviderFunc
+		switch provider {
+		case "gemini":
+			providerFunc = gemini.GenerateCommitMessage
+		case "ollama":
+			providerFunc = ollama.GenerateCommitMessage
+		default:
+			return fmt.Errorf("invalid provider")
+		}
+
 		s := spinner.New(
 			spinner.CharSets[14],
 			time.Millisecond*100,
@@ -41,7 +60,10 @@ var commitCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		msg, err := gemini.GenerateCommitMessage(cmd.Context(), diff, additionalPrompt)
+		ctx, cancel := context.WithTimeout(cmd.Context(), time.Second*30)
+		defer cancel()
+
+		msg, err := providerFunc(ctx, diff, additionalPrompt)
 		if err != nil {
 			return fmt.Errorf("generate git commit: %w", err)
 		}

@@ -4,16 +4,22 @@ Copyright © 2025 Arthur Mariano
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 const (
-	promptFlagName = "prompt"
-
-// providerFlagName = "provider"
+	promptFlagName   = "prompt"
+	providerFlagName = "provider"
 )
+
+var providerOpts = []string{
+	"gemini",
+	"ollama",
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "ditto",
@@ -33,6 +39,6 @@ func init() {
 	rootCmd.PersistentFlags().
 		String(promptFlagName, "", "Used to provide additional context to the model")
 
-	// rootCmd.PersistentFlags().
-	// 	String(providerFlagName, "", "Used to select the model to be used")
+	rootCmd.PersistentFlags().
+		String(providerFlagName, "gemini", fmt.Sprintf("Used to select the provider to be used %s", strings.Join(providerOpts, ",")))
 }
