@@ -29,7 +29,9 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("generate git commit: %w", err)
 		}
 
-		fmt.Println(res)
+		if err := git.CommitWithMessage(cmd.Context(), res); err != nil {
+			return fmt.Errorf("execute commit: %w", err)
+		}
 
 		return nil
 	},

@@ -36,7 +36,7 @@ func GenerateGitCommit(ctx context.Context, diff string) (string, error) {
 
 	body := generateRequestBody{
 		Model:  GitCommitMessage,
-		Prompt: fmt.Sprintf("Use conventional commits:\n%s", diff),
+		Prompt: diff,
 		Stream: false,
 		Raw:    false,
 	}
