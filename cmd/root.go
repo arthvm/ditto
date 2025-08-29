@@ -9,6 +9,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	promptFlagName = "prompt"
+
+// providerFlagName = "provider"
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "ditto",
 	Short: "An ai-application to simplify git workflows",
@@ -21,4 +27,12 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func init() {
+	rootCmd.PersistentFlags().
+		String(promptFlagName, "", "Used to provide additional context to the model")
+
+	// rootCmd.PersistentFlags().
+	// 	String(providerFlagName, "", "Used to select the model to be used")
 }

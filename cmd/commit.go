@@ -26,6 +26,11 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("staged changes: %w", err)
 		}
 
+		additionalPrompt, err := cmd.Flags().GetString(promptFlagName)
+		if err != nil {
+			return fmt.Errorf("get prompt flag: %w", err)
+		}
+
 		s := spinner.New(
 			spinner.CharSets[14],
 			time.Millisecond*100,
@@ -36,7 +41,7 @@ var commitCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		msg, err := gemini.GenerateCommitMessage(cmd.Context(), diff)
+		msg, err := gemini.GenerateCommitMessage(cmd.Context(), diff, additionalPrompt)
 		if err != nil {
 			return fmt.Errorf("generate git commit: %w", err)
 		}
