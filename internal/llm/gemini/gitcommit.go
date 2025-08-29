@@ -6,7 +6,12 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/arthvm/ditto/internal/llm"
 )
+
+type model struct {
+}
 
 func getSystemPrompt(additionalContext string) string {
 	if additionalContext != "" {
@@ -51,7 +56,11 @@ Provide only the final commit message, without additional explanations.
 `, additionalContext)
 }
 
-func GenerateCommitMessage(
+func init() {
+	llm.Register("gemini", &model{})
+}
+
+func (m *model) GenerateCommitMessage(
 	ctx context.Context,
 	diff string,
 	additionalContext string,

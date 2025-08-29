@@ -9,17 +9,16 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/arthvm/ditto/internal/llm"
+	_ "github.com/arthvm/ditto/internal/llm/gemini"
+	_ "github.com/arthvm/ditto/internal/llm/ollama"
 )
 
 const (
 	promptFlagName   = "prompt"
 	providerFlagName = "provider"
 )
-
-var providerOpts = []string{
-	"gemini",
-	"ollama",
-}
 
 var rootCmd = &cobra.Command{
 	Use:   "ditto",
@@ -40,5 +39,5 @@ func init() {
 		String(promptFlagName, "", "Used to provide additional context to the model")
 
 	rootCmd.PersistentFlags().
-		String(providerFlagName, "gemini", fmt.Sprintf("Used to select the provider to be used %s", strings.Join(providerOpts, ",")))
+		String(providerFlagName, "gemini", fmt.Sprintf("Used to select the provider to be used %s", strings.Join(llm.ListProviders(), ",")))
 }

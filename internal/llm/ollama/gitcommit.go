@@ -7,9 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
+	"github.com/arthvm/ditto/internal/llm"
 )
 
 type Model = string
+
+type model struct {
+}
 
 const (
 	GitCommitMessage Model = "tavernari/git-commit-message"
@@ -26,7 +31,11 @@ type generateResponseBody struct {
 	Response string `json:"response"`
 }
 
-func GenerateCommitMessage(
+func init() {
+	llm.Register("ollama", &model{})
+}
+
+func (m *model) GenerateCommitMessage(
 	ctx context.Context,
 	diff string,
 	additionalContext string,
