@@ -13,7 +13,8 @@ import (
 
 type Model = string
 
-type model struct {
+type provider struct {
+	model Model
 }
 
 const (
@@ -32,10 +33,12 @@ type generateResponseBody struct {
 }
 
 func init() {
-	llm.Register("ollama", &model{})
+	llm.Register("ollama", &provider{
+		model: GitCommitMessage,
+	})
 }
 
-func (m *model) GenerateCommitMessage(
+func (p *provider) GenerateCommitMessage(
 	ctx context.Context,
 	diff string,
 	additionalContext string,
@@ -48,7 +51,7 @@ func (m *model) GenerateCommitMessage(
 	url := fmt.Sprintf("%s/api/generate", baseUrl)
 
 	body := generateRequestBody{
-		Model:  GitCommitMessage,
+		Model:  p.model,
 		Prompt: diff,
 		Stream: false,
 		Raw:    false,

@@ -10,7 +10,16 @@ import (
 	"github.com/arthvm/ditto/internal/llm"
 )
 
-type model struct {
+type Model = string
+
+const (
+	GeminiFlash     Model = "gemini-2.5-flash"
+	GeminiFlashLite Model = "gemini-2.5-flash-lite"
+	GeminiPro       Model = "gemini-2.5-pro"
+)
+
+type provider struct {
+	model Model
 }
 
 func getSystemPrompt(additionalContext string) string {
@@ -57,10 +66,12 @@ Provide only the final commit message, without additional explanations.
 }
 
 func init() {
-	llm.Register("gemini", &model{})
+	llm.Register("gemini", &provider{
+		model: GeminiPro,
+	})
 }
 
-func (m *model) GenerateCommitMessage(
+func (p *provider) GenerateCommitMessage(
 	ctx context.Context,
 	diff string,
 	additionalContext string,
@@ -76,7 +87,7 @@ func (m *model) GenerateCommitMessage(
 		return "", fmt.Errorf("write to prompt file: %w", err)
 	}
 
-	cmd := exec.CommandContext(ctx, "gemini")
+	cmd := exec.CommandContext(ctx, "gemini", "-m", p.model)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("GEMINI_SYSTEM_MD=%s", promptFile.Name()))
 
 	cmd.Stdin = strings.NewReader(diff)
