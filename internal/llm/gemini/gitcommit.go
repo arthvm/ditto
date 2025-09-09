@@ -3,9 +3,8 @@ package gemini
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
-	"strings"
+
+	"google.golang.org/genai"
 
 	"github.com/arthvm/ditto/internal/llm"
 )
@@ -84,26 +83,24 @@ func (p *provider) GenerateCommitMessage(
 	diff string,
 	additionalContext string,
 ) (string, error) {
-	promptFile, err := os.CreateTemp("", "gemini-prompt-*.md")
+	client, err := genai.NewClient(ctx, nil)
 	if err != nil {
-		return "", fmt.Errorf("create prompt file: %w", err)
-	}
-	defer os.Remove(promptFile.Name())
-	defer promptFile.Close()
-
-	if _, err := promptFile.WriteString(getSystemPrompt(additionalContext)); err != nil {
-		return "", fmt.Errorf("write to prompt file: %w", err)
+		return "", fmt.Errorf("generate client: %w", err)
 	}
 
-	cmd := exec.CommandContext(ctx, "gemini", "-m", p.model)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("GEMINI_SYSTEM_MD=%s", promptFile.Name()))
-
-	cmd.Stdin = strings.NewReader(diff)
-
-	res, err := cmd.Output()
-	if err != nil {
-		return "", err
+	config := &genai.GenerateContentConfig{
+		SystemInstruction: genai.NewContentFromText(
+			getSystemPrompt(additionalContext),
+			genai.RoleUser,
+		),
 	}
 
-	return string(res), nil
+	result, err := client.Models.GenerateContent(
+		ctx,
+		p.model,
+		genai.Text(diff),
+		config,
+	)
+
+	return result.Text(), err
 }
