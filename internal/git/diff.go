@@ -2,12 +2,18 @@ package git
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 )
 
 var (
 	Staged DiffOption = "--staged"
+	Stats  DiffOption = "--stat"
 )
+
+func Branches(head string, base string) DiffOption {
+	return DiffOption(fmt.Sprintf("%s..%s", head, base))
+}
 
 type DiffOption string
 
