@@ -63,11 +63,7 @@ You will receive:
 ## Response Format:
 Provide only the formatted PR information without additional explanations:
 
----
-title: [TITLE]
-base: [PROVIDED BASE BRANCH]
-head: [PROVIDED HEAD BRANCH]
----
+[TITLE]
 [BODY]
 
 %s

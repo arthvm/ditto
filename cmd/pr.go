@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -84,8 +85,23 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("generate pr: %w", err)
 		}
 
+		nLine := strings.Index(msg, "\n")
+		if nLine == -1 {
+			return fmt.Errorf("generate pr: failed to generate body")
+		}
+		title := strings.TrimSpace(msg[:nLine])
+		body := strings.TrimSpace(msg[nLine+1:])
+
 		s.Stop()
-		fmt.Println(msg)
+		if err := git.OpenPr(cmd.Context(), git.OpenPrParams{
+			Title:     title,
+			Body:      body,
+			Head:      headBranch,
+			Base:      baseBranch,
+			UseEditor: true,
+		}); err != nil {
+			return fmt.Errorf("open pr: %w", err)
+		}
 
 		return nil
 	},
