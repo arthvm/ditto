@@ -22,7 +22,7 @@ var commitCmd = &cobra.Command{
 	but will be able to change providers in the future - to
 	generate git commit messages for the stage changes`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		diff, err := git.StagedDiff(cmd.Context())
+		diff, err := git.Diff(cmd.Context(), git.Staged)
 		if err != nil {
 			return fmt.Errorf("staged changes: %w", err)
 		}

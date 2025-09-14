@@ -5,8 +5,20 @@ import (
 	"os/exec"
 )
 
-func StagedDiff(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "diff", "--staged")
+var (
+	Staged DiffOption = "--staged"
+)
+
+type DiffOption string
+
+func Diff(ctx context.Context, options ...DiffOption) (string, error) {
+	args := make([]string, len(options))
+	for i, opt := range options {
+		args[i] = string(opt)
+	}
+	gitArgs := append([]string{"diff"}, args...)
+
+	cmd := exec.CommandContext(ctx, "git", gitArgs...)
 
 	res, err := cmd.Output()
 	if err != nil {
