@@ -5,10 +5,13 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 
 	"github.com/arthvm/ditto/internal/git"
+	"github.com/arthvm/ditto/internal/llm"
 )
 
 var prCmd = &cobra.Command{
@@ -32,6 +35,31 @@ var prCmd = &cobra.Command{
 			}
 		}
 
+		additionalPrompt, err := cmd.Flags().GetString(promptFlagName)
+		if err != nil {
+			return fmt.Errorf("get prompt flag: %w", err)
+		}
+
+		providerName, err := cmd.Flags().GetString(providerFlagName)
+		if err != nil {
+			return fmt.Errorf("get provider flag: %w", err)
+		}
+
+		provider, err := llm.GetProvider(providerName)
+		if err != nil {
+			return err
+		}
+
+		s := spinner.New(
+			spinner.CharSets[14],
+			time.Millisecond*100,
+			spinner.WithColor("yellow"),
+		)
+		s.Suffix = " Generating PR..."
+
+		s.Start()
+		defer s.Stop()
+
 		log, err := git.Log(cmd.Context(), git.Branches(baseBranch, headBranch))
 		if err != nil {
 			return fmt.Errorf("get log: %w", err)
@@ -46,8 +74,18 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("diff stats: %w", err)
 		}
 
-		fmt.Println(log)
-		fmt.Println(diff)
+		msg, err := provider.GeneratePr(cmd.Context(), llm.GeneratePrParams{
+			HeadBranch: headBranch,
+			BaseBranch: baseBranch,
+			Log:        log,
+			DiffStats:  diff,
+		}, additionalPrompt)
+		if err != nil {
+			return fmt.Errorf("generate pr: %w", err)
+		}
+
+		s.Stop()
+		fmt.Println(msg)
 
 		return nil
 	},
