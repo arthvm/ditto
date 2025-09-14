@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 )
 
@@ -11,16 +10,20 @@ var (
 	Stats  DiffOption = "--stat"
 )
 
-func Branches(head string, base string) DiffOption {
-	return DiffOption(fmt.Sprintf("%s..%s", head, base))
+type diffArg interface {
+	String() string
+	isDiffArg()
 }
 
 type DiffOption string
 
-func Diff(ctx context.Context, options ...DiffOption) (string, error) {
+func (o DiffOption) String() string { return string(o) }
+func (o DiffOption) isDiffArg()     {}
+
+func Diff(ctx context.Context, options ...diffArg) (string, error) {
 	args := make([]string, len(options))
 	for i, opt := range options {
-		args[i] = string(opt)
+		args[i] = opt.String()
 	}
 	gitArgs := append([]string{"diff"}, args...)
 
