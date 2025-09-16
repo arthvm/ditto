@@ -73,6 +73,9 @@ func (p *provider) GenerateCommitMessage(
 		genai.Text(diff),
 		config,
 	)
+	if err != nil {
+		return "", err
+	}
 
-	return result.Text(), err
+	return result.Text(), nil
 }
