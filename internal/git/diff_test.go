@@ -56,7 +56,7 @@ func TestStagedDiff(t *testing.T) {
 	defer os.Chdir(wd)
 
 	os.Chdir(repo)
-	diff, err := git.StagedDiff(ctx)
+	diff, err := git.Diff(ctx, git.Staged)
 
 	assert.NoError(t, err)
 	assert.Equal(t, `diff --git a/hello.txt b/hello.txt
