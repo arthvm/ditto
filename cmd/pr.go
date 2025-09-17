@@ -22,6 +22,7 @@ import (
 const (
 	noTemplateFlagName = "no-template"
 	draftFlagName      = "draft"
+	issuesFlagName     = "issues"
 )
 
 func findPRTemplate(root string) (string, error) {
@@ -81,6 +82,11 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("get draft flag: %w", err)
 		}
 
+		issues, err := cmd.Flags().GetStringSlice(issuesFlagName)
+		if err != nil {
+			return fmt.Errorf("get issues flag: %w", err)
+		}
+
 		providerName, err := cmd.Flags().GetString(providerFlagName)
 		if err != nil {
 			return fmt.Errorf("get provider flag: %w", err)
@@ -134,6 +140,7 @@ var prCmd = &cobra.Command{
 			Log:               log,
 			DiffStats:         diff,
 			AdditionalContext: additionalPrompt,
+			Issues:            issues,
 			Template:          template,
 		})
 		if err != nil {
@@ -169,6 +176,9 @@ func init() {
 
 	prCmd.Flags().
 		Bool(draftFlagName, false, "Set this flag to create the PR as a draft")
+
+	prCmd.Flags().
+		StringSlice(issuesFlagName, nil, "Specifies the issues that are addressed by the PR.")
 
 	rootCmd.AddCommand(prCmd)
 }

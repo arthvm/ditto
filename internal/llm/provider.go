@@ -18,6 +18,7 @@ type GeneratePrParams struct {
 	Log               string
 	DiffStats         string
 	Template          string
+	Issues            []string
 	AdditionalContext string
 }
 
