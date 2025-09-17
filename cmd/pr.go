@@ -21,6 +21,7 @@ import (
 
 const (
 	noTemplateFlagName = "no-template"
+	draftFlagName      = "draft"
 )
 
 func findPRTemplate(root string) (string, error) {
@@ -73,6 +74,11 @@ var prCmd = &cobra.Command{
 		ignoreTemplate, err := cmd.Flags().GetBool(noTemplateFlagName)
 		if err != nil {
 			return fmt.Errorf("get ignore template flag: %w", err)
+		}
+
+		draft, err := cmd.Flags().GetBool(draftFlagName)
+		if err != nil {
+			return fmt.Errorf("get draft flag: %w", err)
 		}
 
 		providerName, err := cmd.Flags().GetString(providerFlagName)
@@ -148,6 +154,7 @@ var prCmd = &cobra.Command{
 			Head:      headBranch,
 			Base:      baseBranch,
 			UseEditor: true,
+			Draft:     draft,
 		}); err != nil {
 			return fmt.Errorf("open pr: %w", err)
 		}
@@ -159,6 +166,9 @@ var prCmd = &cobra.Command{
 func init() {
 	prCmd.Flags().
 		Bool(noTemplateFlagName, false, "Set this flag to ignore any template defined in the repo")
+
+	prCmd.Flags().
+		Bool(draftFlagName, false, "Set this flag to create the PR as a draft")
 
 	rootCmd.AddCommand(prCmd)
 }
