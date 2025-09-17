@@ -26,7 +26,7 @@ func getPrSystemPrompt(params prSystemPromptParams) string {
 2.  **Use Template**: Your final output **must** strictly use the format defined in the '--- TEMPLATE ---' block below. Preserve all headers, formatting, and language from the template.
 3.  **Populate Template**: Use the information from your analysis (Step 1) to populate the appropriate sections of the template. For example, the "What & Why" information should go into the template's description or motivation section.
 4.  **Handle Missing Information**: If you cannot infer information for a specific section of the template from the context, **keep the section header but leave its content empty** for the user to complete.
-5. **Do not apply template to title**: The title of the PR should not be influenced whatsover by the template defined bellow
+5. **Do not apply template to title**: The title of the PR should not be influenced whatsoever by the template defined below
 
 --- TEMPLATE ---
 %s
