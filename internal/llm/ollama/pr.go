@@ -10,7 +10,6 @@ import (
 func (p *provider) GeneratePr(
 	ctx context.Context,
 	params llm.GeneratePrParams,
-	additionalContext string,
 ) (string, error) {
 	return "", llm.ErrNoSupport
 }
