@@ -103,6 +103,9 @@ func (p *provider) GeneratePr(
 		genai.Text(context),
 		config,
 	)
+	if err != nil {
+		return "", err
+	}
 
-	return result.Text(), err
+	return result.Text(), nil
 }
