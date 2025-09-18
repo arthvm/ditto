@@ -22,7 +22,6 @@ import (
 const (
 	noTemplateFlagName = "no-template"
 	draftFlagName      = "draft"
-	issuesFlagName     = "issues"
 )
 
 func findPRTemplate(root string) (string, error) {
@@ -176,9 +175,6 @@ func init() {
 
 	prCmd.Flags().
 		Bool(draftFlagName, false, "Set this flag to create the PR as a draft")
-
-	prCmd.Flags().
-		StringSlice(issuesFlagName, nil, "Specifies the issues that are addressed by the PR.")
 
 	rootCmd.AddCommand(prCmd)
 }

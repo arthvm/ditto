@@ -22,8 +22,14 @@ type GeneratePrParams struct {
 	AdditionalContext string
 }
 
+type GenerateCommitParams struct {
+	Diff              string
+	Issues            []string
+	AdditionalContext string
+}
+
 type Provider interface {
-	GenerateCommitMessage(context.Context, string, string) (string, error)
+	GenerateCommitMessage(context.Context, GenerateCommitParams) (string, error)
 	GeneratePr(context.Context, GeneratePrParams) (string, error)
 }
 

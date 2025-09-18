@@ -29,6 +29,11 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get prompt flag: %w", err)
 		}
 
+		issues, err := cmd.Flags().GetStringSlice(issuesFlagName)
+		if err != nil {
+			return fmt.Errorf("get issues flag: %w", err)
+		}
+
 		providerName, err := cmd.Flags().GetString(providerFlagName)
 		if err != nil {
 			return fmt.Errorf("get provider flag: %w", err)
@@ -52,7 +57,11 @@ var commitCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*1)
 		defer cancel()
 
-		msg, err := provider.GenerateCommitMessage(ctx, diff, additionalPrompt)
+		msg, err := provider.GenerateCommitMessage(ctx, llm.GenerateCommitParams{
+			Diff:              diff,
+			Issues:            issues,
+			AdditionalContext: additionalPrompt,
+		})
 		if err != nil {
 			return fmt.Errorf("generate git commit: %w", err)
 		}

@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
+	"github.com/arthvm/ditto/internal/llm"
 )
 
 func (p *provider) GenerateCommitMessage(
 	ctx context.Context,
-	diff string,
-	additionalContext string,
+	params llm.GenerateCommitParams,
 ) (string, error) {
 	baseUrl, exists := os.LookupEnv("OLLAMA_HOST")
 	if !exists {
@@ -23,7 +24,7 @@ func (p *provider) GenerateCommitMessage(
 
 	body := generateRequestBody{
 		Model:  p.model,
-		Prompt: diff,
+		Prompt: params.Diff,
 		Stream: false,
 		Raw:    false,
 	}
