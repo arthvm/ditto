@@ -12,6 +12,7 @@ type OpenPrParams struct {
 	Base      string
 	Body      string
 	UseEditor bool
+	Draft     bool
 }
 
 func OpenPr(ctx context.Context, params OpenPrParams) error {
@@ -24,6 +25,10 @@ func OpenPr(ctx context.Context, params OpenPrParams) error {
 
 	if params.UseEditor {
 		args = append(args, "--editor")
+	}
+
+	if params.Draft {
+		args = append(args, "--draft")
 	}
 
 	ghArgs := append([]string{"pr", "create"}, args...)

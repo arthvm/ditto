@@ -13,19 +13,18 @@ var (
 )
 
 type GeneratePrParams struct {
-	HeadBranch string
-	BaseBranch string
-	Log        string
-	DiffStats  string
+	HeadBranch        string
+	BaseBranch        string
+	Log               string
+	DiffStats         string
+	Template          string
+	Issues            []string
+	AdditionalContext string
 }
 
 type Provider interface {
 	GenerateCommitMessage(context.Context, string, string) (string, error)
-	GeneratePr(
-		ctx context.Context,
-		params GeneratePrParams,
-		additionalContext string,
-	) (string, error)
+	GeneratePr(context.Context, GeneratePrParams) (string, error)
 }
 
 var providers map[string]Provider

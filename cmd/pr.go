@@ -5,6 +5,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,6 +16,35 @@ import (
 	"github.com/arthvm/ditto/internal/git"
 	"github.com/arthvm/ditto/internal/llm"
 )
+
+//TODO: Maybe I should refactor this for better readability...
+
+const (
+	noTemplateFlagName = "no-template"
+	draftFlagName      = "draft"
+	issuesFlagName     = "issues"
+)
+
+func findPRTemplate(root string) (string, error) {
+	paths := []string{
+		filepath.Join(root, ".github", "pull_request_template.md"),
+		filepath.Join(root, "docs", "pull_request_template.md"),
+		filepath.Join(root, "PULL_REQUEST_TEMPLATE.md"),
+	}
+
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			content, err := os.ReadFile(p)
+			if err != nil {
+				return "", err
+			}
+
+			return string(content), nil
+		}
+	}
+
+	return "", nil
+}
 
 var prCmd = &cobra.Command{
 	Use:   "pr",
@@ -39,6 +70,21 @@ var prCmd = &cobra.Command{
 		additionalPrompt, err := cmd.Flags().GetString(promptFlagName)
 		if err != nil {
 			return fmt.Errorf("get prompt flag: %w", err)
+		}
+
+		ignoreTemplate, err := cmd.Flags().GetBool(noTemplateFlagName)
+		if err != nil {
+			return fmt.Errorf("get ignore template flag: %w", err)
+		}
+
+		draft, err := cmd.Flags().GetBool(draftFlagName)
+		if err != nil {
+			return fmt.Errorf("get draft flag: %w", err)
+		}
+
+		issues, err := cmd.Flags().GetStringSlice(issuesFlagName)
+		if err != nil {
+			return fmt.Errorf("get issues flag: %w", err)
 		}
 
 		providerName, err := cmd.Flags().GetString(providerFlagName)
@@ -75,12 +121,28 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("diff stats: %w", err)
 		}
 
+		root, err := git.Root(cmd.Context())
+		if err != nil {
+			return fmt.Errorf("get root dir: %w", err)
+		}
+
+		var template string
+		if !ignoreTemplate {
+			template, err = findPRTemplate(root)
+			if err != nil {
+				return fmt.Errorf("get pr template: %w", err)
+			}
+		}
+
 		msg, err := provider.GeneratePr(cmd.Context(), llm.GeneratePrParams{
-			HeadBranch: headBranch,
-			BaseBranch: baseBranch,
-			Log:        log,
-			DiffStats:  diff,
-		}, additionalPrompt)
+			HeadBranch:        headBranch,
+			BaseBranch:        baseBranch,
+			Log:               log,
+			DiffStats:         diff,
+			AdditionalContext: additionalPrompt,
+			Issues:            issues,
+			Template:          template,
+		})
 		if err != nil {
 			return fmt.Errorf("generate pr: %w", err)
 		}
@@ -99,6 +161,7 @@ var prCmd = &cobra.Command{
 			Head:      headBranch,
 			Base:      baseBranch,
 			UseEditor: true,
+			Draft:     draft,
 		}); err != nil {
 			return fmt.Errorf("open pr: %w", err)
 		}
@@ -108,5 +171,14 @@ var prCmd = &cobra.Command{
 }
 
 func init() {
+	prCmd.Flags().
+		Bool(noTemplateFlagName, false, "Set this flag to ignore any template defined in the repo")
+
+	prCmd.Flags().
+		Bool(draftFlagName, false, "Set this flag to create the PR as a draft")
+
+	prCmd.Flags().
+		StringSlice(issuesFlagName, nil, "Specifies the issues that are addressed by the PR.")
+
 	rootCmd.AddCommand(prCmd)
 }
