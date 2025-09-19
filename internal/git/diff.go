@@ -2,7 +2,9 @@ package git
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
+	"strings"
 )
 
 var (
@@ -10,7 +12,7 @@ var (
 	Stats  DiffOption = "--stat"
 )
 
-type diffArg interface {
+type DiffArg interface {
 	String() string
 	isDiffArg()
 }
@@ -20,10 +22,16 @@ type DiffOption string
 func (o DiffOption) String() string { return string(o) }
 func (o DiffOption) isDiffArg()     {}
 
-func Diff(ctx context.Context, options ...diffArg) (string, error) {
-	args := make([]string, len(options))
-	for i, opt := range options {
-		args[i] = opt.String()
+func Cached(target string) DiffOption {
+	return DiffOption(fmt.Sprintf("--cached %s", target))
+}
+
+func Diff(ctx context.Context, options ...DiffArg) (string, error) {
+	var args []string
+
+	for _, opt := range options {
+		parts := strings.Fields(opt.String())
+		args = append(args, parts...)
 	}
 	gitArgs := append([]string{"diff"}, args...)
 

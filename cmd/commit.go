@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -15,13 +17,31 @@ import (
 	"github.com/arthvm/ditto/internal/llm"
 )
 
+const (
+	amendFlagName = "amend"
+)
+
 var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "Used to generated a git commit message from staged changes",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		diff, err := git.Diff(cmd.Context(), git.Staged)
+		amend, err := cmd.Flags().GetBool(amendFlagName)
+		if err != nil {
+			return fmt.Errorf("get amend flag: %w", err)
+		}
+
+		diffOpt := []git.DiffArg{git.Staged}
+		if amend {
+			diffOpt = append(diffOpt, git.Cached("HEAD^"))
+		}
+
+		diff, err := git.Diff(cmd.Context(), diffOpt...)
 		if err != nil {
 			return fmt.Errorf("staged changes: %w", err)
+		}
+
+		if strings.TrimSpace(diff) == "" {
+			return errors.New("no staged changes")
 		}
 
 		additionalPrompt, err := cmd.Flags().GetString(promptFlagName)
@@ -67,7 +87,13 @@ var commitCmd = &cobra.Command{
 		}
 
 		s.Stop()
-		if err := git.CommitWithMessage(cmd.Context(), msg); err != nil {
+		commitOpts := []git.CommitOption{}
+
+		if amend {
+			commitOpts = append(commitOpts, git.Amend)
+		}
+
+		if err := git.CommitWithMessage(cmd.Context(), msg, commitOpts...); err != nil {
 			return fmt.Errorf("execute commit: %w", err)
 		}
 
@@ -77,4 +103,7 @@ var commitCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(commitCmd)
+
+	commitCmd.Flags().
+		Bool(amendFlagName, false, "Used to edit the past commit with the current changes")
 }
