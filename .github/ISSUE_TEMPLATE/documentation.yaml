@@ -1,0 +1,75 @@
+name: 📚 Documentation Issue
+description: Report missing, unclear, or incorrect documentation
+title: "[DOCS] "
+labels: ["documentation", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! Please describe the issue below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What documentation issue did you find?
+      placeholder: The documentation for... is unclear because...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing documentation
+        - Unclear/confusing explanation
+        - Incorrect information
+        - Outdated content
+        - Broken links
+        - Typo/grammar error
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Where is this documentation located?
+      placeholder: https://docs.example.com/section or README.md line 45
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_content
+    attributes:
+      label: Current content
+      description: What does the current documentation say? (copy/paste if possible)
+      placeholder: The current docs say "..." but this is confusing because...
+
+  - type: textarea
+    id: suggested_improvement
+    attributes:
+      label: Suggested improvement
+      description: How should this be fixed or improved?
+      placeholder: It should explain that... or include an example showing...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why is this documentation important? What were you trying to achieve?
+      placeholder: I was trying to... and couldn't figure out how because...
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Any other relevant information
+      placeholder: This might also affect the tutorial at...
