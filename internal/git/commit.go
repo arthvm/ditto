@@ -10,6 +10,7 @@ type CommitOption string
 
 const (
 	Amend CommitOption = "--amend"
+	All   CommitOption = "--all"
 )
 
 func CommitWithMessage(ctx context.Context, msg string, options ...CommitOption) error {

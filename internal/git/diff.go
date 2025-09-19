@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -22,8 +21,8 @@ type DiffOption string
 func (o DiffOption) String() string { return string(o) }
 func (o DiffOption) isDiffArg()     {}
 
-func Cached(target string) DiffOption {
-	return DiffOption(fmt.Sprintf("--cached %s", target))
+func Target(target string) DiffOption {
+	return DiffOption(target)
 }
 
 func Diff(ctx context.Context, options ...DiffArg) (string, error) {

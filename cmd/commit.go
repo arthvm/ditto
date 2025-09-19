@@ -19,7 +19,11 @@ import (
 
 const (
 	amendFlagName = "amend"
+	allFlagName   = "all"
 )
+
+//TODO: Yeah, this *needs* a refactor. I don't really like how I'm checking
+// the flags, specialy --all and --amend
 
 var commitCmd = &cobra.Command{
 	Use:   "commit",
@@ -30,9 +34,22 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get amend flag: %w", err)
 		}
 
-		diffOpt := []git.DiffArg{git.Staged}
-		if amend {
-			diffOpt = append(diffOpt, git.Cached("HEAD^"))
+		all, err := cmd.Flags().GetBool(allFlagName)
+		if err != nil {
+			return fmt.Errorf("get all flag: %w", err)
+		}
+
+		diffOpt := []git.DiffArg{}
+
+		switch {
+		case amend && all:
+			diffOpt = append(diffOpt, git.Target("HEAD^"))
+		case amend:
+			diffOpt = append(diffOpt, git.Staged, git.Target("HEAD^"))
+		case all:
+			diffOpt = append(diffOpt, git.Target("HEAD"))
+		default:
+			diffOpt = append(diffOpt, git.Staged)
 		}
 
 		diff, err := git.Diff(cmd.Context(), diffOpt...)
@@ -93,6 +110,10 @@ var commitCmd = &cobra.Command{
 			commitOpts = append(commitOpts, git.Amend)
 		}
 
+		if all {
+			commitOpts = append(commitOpts, git.All)
+		}
+
 		if err := git.CommitWithMessage(cmd.Context(), msg, commitOpts...); err != nil {
 			return fmt.Errorf("execute commit: %w", err)
 		}
@@ -106,4 +127,7 @@ func init() {
 
 	commitCmd.Flags().
 		Bool(amendFlagName, false, "Used to edit the past commit with the current changes")
+
+	commitCmd.Flags().
+		BoolP(allFlagName, "a", false, "Used to commit all tracked files")
 }
