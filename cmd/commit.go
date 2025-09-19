@@ -23,7 +23,7 @@ const (
 )
 
 //TODO: Yeah, this *needs* a refactor. I don't really like how I'm checking
-// the flags, specialy --all and --amend
+// the flags, especially --all and --amend
 
 var commitCmd = &cobra.Command{
 	Use:   "commit",
@@ -58,7 +58,13 @@ var commitCmd = &cobra.Command{
 		}
 
 		if strings.TrimSpace(diff) == "" {
-			return errors.New("no staged changes")
+			msg := "no staged changes"
+
+			if amend || all {
+				msg = "no changes to commit"
+			}
+
+			return errors.New(msg)
 		}
 
 		additionalPrompt, err := cmd.Flags().GetString(promptFlagName)
