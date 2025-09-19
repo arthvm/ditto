@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -15,18 +17,64 @@ import (
 	"github.com/arthvm/ditto/internal/llm"
 )
 
+const (
+	amendFlagName = "amend"
+	allFlagName   = "all"
+)
+
+//TODO: Yeah, this *needs* a refactor. I don't really like how I'm checking
+// the flags, especially --all and --amend
+
 var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "Used to generated a git commit message from staged changes",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		diff, err := git.Diff(cmd.Context(), git.Staged)
+		amend, err := cmd.Flags().GetBool(amendFlagName)
+		if err != nil {
+			return fmt.Errorf("get amend flag: %w", err)
+		}
+
+		all, err := cmd.Flags().GetBool(allFlagName)
+		if err != nil {
+			return fmt.Errorf("get all flag: %w", err)
+		}
+
+		diffOpt := []git.DiffArg{}
+
+		switch {
+		case amend && all:
+			diffOpt = append(diffOpt, git.Target("HEAD^"))
+		case amend:
+			diffOpt = append(diffOpt, git.Staged, git.Target("HEAD^"))
+		case all:
+			diffOpt = append(diffOpt, git.Target("HEAD"))
+		default:
+			diffOpt = append(diffOpt, git.Staged)
+		}
+
+		diff, err := git.Diff(cmd.Context(), diffOpt...)
 		if err != nil {
 			return fmt.Errorf("staged changes: %w", err)
+		}
+
+		if strings.TrimSpace(diff) == "" {
+			msg := "no staged changes"
+
+			if amend || all {
+				msg = "no changes to commit"
+			}
+
+			return errors.New(msg)
 		}
 
 		additionalPrompt, err := cmd.Flags().GetString(promptFlagName)
 		if err != nil {
 			return fmt.Errorf("get prompt flag: %w", err)
+		}
+
+		issues, err := cmd.Flags().GetStringSlice(issuesFlagName)
+		if err != nil {
+			return fmt.Errorf("get issues flag: %w", err)
 		}
 
 		providerName, err := cmd.Flags().GetString(providerFlagName)
@@ -52,13 +100,27 @@ var commitCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*1)
 		defer cancel()
 
-		msg, err := provider.GenerateCommitMessage(ctx, diff, additionalPrompt)
+		msg, err := provider.GenerateCommitMessage(ctx, llm.GenerateCommitParams{
+			Diff:              diff,
+			Issues:            issues,
+			AdditionalContext: additionalPrompt,
+		})
 		if err != nil {
 			return fmt.Errorf("generate git commit: %w", err)
 		}
 
 		s.Stop()
-		if err := git.CommitWithMessage(cmd.Context(), msg); err != nil {
+		commitOpts := []git.CommitOption{}
+
+		if amend {
+			commitOpts = append(commitOpts, git.Amend)
+		}
+
+		if all {
+			commitOpts = append(commitOpts, git.All)
+		}
+
+		if err := git.CommitWithMessage(cmd.Context(), msg, commitOpts...); err != nil {
 			return fmt.Errorf("execute commit: %w", err)
 		}
 
@@ -68,4 +130,10 @@ var commitCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(commitCmd)
+
+	commitCmd.Flags().
+		Bool(amendFlagName, false, "Used to edit the past commit with the current changes")
+
+	commitCmd.Flags().
+		BoolP(allFlagName, "a", false, "Used to commit all tracked files")
 }

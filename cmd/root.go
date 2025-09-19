@@ -20,6 +20,7 @@ const (
 	providerFlagName = "provider"
 	headBranchFlag   = "head"
 	baseBranchFlag   = "base"
+	issuesFlagName   = "issues"
 )
 
 var rootCmd = &cobra.Command{
@@ -45,4 +46,8 @@ func init() {
 
 	rootCmd.PersistentFlags().String(baseBranchFlag, "main", "The destination branch")
 	rootCmd.PersistentFlags().String(headBranchFlag, "", "The origin branch")
+
+	rootCmd.PersistentFlags().
+		StringSlice(issuesFlagName, nil, "Specifies the issues that are addressed by the operation.")
+
 }
