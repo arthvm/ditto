@@ -93,7 +93,7 @@ var prCmd = &cobra.Command{
 
 		provider, err := llm.GetProvider(providerName)
 		if err != nil {
-			return err
+			return fmt.Errorf("get provider: %w", err)
 		}
 
 		s := spinner.New(
