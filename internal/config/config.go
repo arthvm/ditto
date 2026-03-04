@@ -23,7 +23,8 @@ type CommitConfig struct {
 }
 
 type PRConfig struct {
-	Prompt string `yaml:"prompt"`
+	Prompt       string `yaml:"prompt"`
+	TemplatePath string `yaml:"template_path"`
 }
 
 type GeminiConfig struct {

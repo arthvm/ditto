@@ -20,6 +20,7 @@ type PRParams struct {
 	HeadBranch        string
 	SystemPrompt      string
 	AdditionalContext string
+	TemplatePath      string
 	Issues            []string
 	IgnoreTemplate    bool
 	Draft             bool
@@ -52,7 +53,7 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 
 	var template string
 	if !params.IgnoreTemplate {
-		template, err = deps.Platform.FindPRTemplate(root)
+		template, err = deps.Platform.FindPRTemplate(root, params.TemplatePath)
 		if err != nil {
 			return fmt.Errorf("get pr template: %w", err)
 		}

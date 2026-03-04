@@ -62,7 +62,9 @@ type OpenPRParams struct {
 type Platform interface {
 	// FindPRTemplate looks for a pull request template file in the
 	// repository and returns its contents, or empty string if none found.
-	FindPRTemplate(repoRoot string) (string, error)
+	// If customPath is non-empty it is checked first (relative to repoRoot
+	// if not absolute) before falling back to well-known default locations.
+	FindPRTemplate(repoRoot, customPath string) (string, error)
 
 	// OpenPR creates a pull request via the platform CLI (e.g. gh, glab).
 	OpenPR(ctx context.Context, params OpenPRParams) error

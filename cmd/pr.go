@@ -65,6 +65,7 @@ var prCmd = &cobra.Command{
 			HeadBranch:        headBranch,
 			SystemPrompt:      appConfig.PR.Prompt,
 			AdditionalContext: additionalPrompt,
+			TemplatePath:      appConfig.PR.TemplatePath,
 			Issues:            issues,
 			IgnoreTemplate:    ignoreTemplate,
 			Draft:             draft,
