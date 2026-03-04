@@ -2,6 +2,7 @@ package platform
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,7 +14,22 @@ import (
 // and GitHub-specific conventions (e.g. .github/pull_request_template.md).
 type GitHub struct{}
 
-func (g GitHub) FindPRTemplate(repoRoot string) (string, error) {
+func (g GitHub) FindPRTemplate(repoRoot, customPath string) (string, error) {
+	if customPath != "" {
+		p := customPath
+		if !filepath.IsAbs(p) {
+			p = filepath.Join(repoRoot, p)
+		}
+		content, err := os.ReadFile(p)
+		if err == nil {
+			return string(content), nil
+		}
+
+		if !os.IsNotExist(err) {
+			return "", fmt.Errorf("pr template: %w", err)
+		}
+	}
+
 	paths := []string{
 		filepath.Join(repoRoot, ".github", "pull_request_template.md"),
 		filepath.Join(repoRoot, "docs", "pull_request_template.md"),

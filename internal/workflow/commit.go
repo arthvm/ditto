@@ -5,20 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/arthvm/ditto/internal/llm"
 	"github.com/arthvm/ditto/internal/prompt"
 )
 
 type CommitDeps struct {
-	VCS      VCS
-	Progress Progress
+	VCS             VCS
+	Provider        Provider
+	Progress        Progress
+	GenerateTimeout time.Duration
 }
 
 type CommitParams struct {
 	Amend             bool
 	All               bool
-	ProviderName      string
+	Edit              bool
+	SystemPrompt      string
 	AdditionalContext string
 	Issues            []string
 }
@@ -36,12 +39,7 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 		return errors.New("no staged changes")
 	}
 
-	provider, err := llm.GetProvider(params.ProviderName)
-	if err != nil {
-		return fmt.Errorf("get provider: %w", err)
-	}
-
-	system := prompt.CommitSystem(params.AdditionalContext)
+	system := prompt.CommitSystem(params.SystemPrompt, params.AdditionalContext)
 	user := prompt.CommitUser(prompt.CommitParams{
 		Diff:   diff,
 		Issues: params.Issues,
@@ -49,10 +47,15 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 
 	deps.Progress.StartSpinner(" Generating commit message...")
 
-	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
+	timeout := deps.GenerateTimeout
+	if timeout == 0 {
+		timeout = generateTimeout
+	}
+
+	genCtx, genCancel := context.WithTimeout(ctx, timeout)
 	defer genCancel()
 
-	msg, err := provider.Generate(genCtx, system, user)
+	msg, err := deps.Provider.Generate(genCtx, system, user)
 
 	deps.Progress.StopSpinner()
 
@@ -60,5 +63,5 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 		return fmt.Errorf("generate git commit: %w", err)
 	}
 
-	return deps.VCS.CommitWithMessage(ctx, msg, params.Amend, params.All)
+	return deps.VCS.CommitWithMessage(ctx, msg, params.Amend, params.All, params.Edit)
 }

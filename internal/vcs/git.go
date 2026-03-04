@@ -30,13 +30,16 @@ func (g Git) Root(ctx context.Context) (string, error) {
 	return git.Root(ctx)
 }
 
-func (g Git) CommitWithMessage(ctx context.Context, msg string, amend, all bool) error {
+func (g Git) CommitWithMessage(ctx context.Context, msg string, amend, all, edit bool) error {
 	var opts []git.CommitOption
 	if amend {
 		opts = append(opts, git.Amend)
 	}
 	if all {
 		opts = append(opts, git.All)
+	}
+	if edit {
+		opts = append(opts, git.Edit)
 	}
 	return git.CommitWithMsg(ctx, msg, opts...)
 }

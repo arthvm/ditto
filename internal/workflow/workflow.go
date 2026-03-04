@@ -5,10 +5,13 @@ import (
 	"time"
 )
 
-// generateTimeout bounds the LLM generation call. Interactive phases
-// (editor, gh pr create) run without a timeout so they can't be killed
-// by an expired deadline.
+// generateTimeout is the fallback used when no timeout is configured.
 const generateTimeout = 2 * time.Minute
+
+// Provider generates text from a system prompt and user prompt.
+type Provider interface {
+	Generate(ctx context.Context, system, user string) (string, error)
+}
 
 // Progress reports long-running operation status to the user.
 // Implementations control how progress is displayed: a CLI spinner,
@@ -37,9 +40,9 @@ type VCS interface {
 	// Root returns the absolute path to the repository root.
 	Root(ctx context.Context) (string, error)
 
-	// CommitWithMessage creates a commit with the given message, opening
-	// the user's editor for final editing.
-	CommitWithMessage(ctx context.Context, msg string, amend, all bool) error
+	// CommitWithMessage creates a commit with the given message. When edit is
+	// true, the user's editor is opened for final review before committing.
+	CommitWithMessage(ctx context.Context, msg string, amend, all, edit bool) error
 }
 
 // OpenPRParams holds the parameters for opening a pull request.
@@ -57,7 +60,9 @@ type OpenPRParams struct {
 type Platform interface {
 	// FindPRTemplate looks for a pull request template file in the
 	// repository and returns its contents, or empty string if none found.
-	FindPRTemplate(repoRoot string) (string, error)
+	// If customPath is non-empty it is checked first (relative to repoRoot
+	// if not absolute) before falling back to well-known default locations.
+	FindPRTemplate(repoRoot, customPath string) (string, error)
 
 	// OpenPR creates a pull request via the platform CLI (e.g. gh, glab).
 	OpenPR(ctx context.Context, params OpenPRParams) error

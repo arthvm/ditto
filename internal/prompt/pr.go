@@ -15,7 +15,7 @@ type PRParams struct {
 	AdditionalContext string
 }
 
-func PRSystem(template, additionalContext string) string {
+func PRSystem(customPrompt, template, additionalContext string) string {
 	var templateBlock string
 
 	if template != "" {
@@ -32,9 +32,58 @@ func PRSystem(template, additionalContext string) string {
 --- END OF TEMPLATE ---`, template)
 	}
 
-	return fmt.Sprintf(`You are a Git and GitHub expert specializing in collaborative workflows and pull request best practices. Your task is to analyze Git commit history and file changes to generate a well-structured pull request title and body that facilitates effective code review and team collaboration.
+	convention := defaultPRConvention
+	if customPrompt != "" {
+		convention = customPrompt
+	}
 
-## PR Title Guidelines:
+	return fmt.Sprintf(`You are a Git expert specializing in collaborative workflows and pull request best practices. Your task is to analyze Git commit history and file changes to generate a well-structured pull request title and body.
+
+%s
+
+%s
+
+## Input Information:
+You will receive:
+- **Base branch**: The target branch for merging
+- **Head branch**: The source branch with changes
+- **Commit history**: Output from git log --pretty="format:%%h %%s%%n%%b%%n" [BASE]..[HEAD]
+- **File changes summary**: Output from git diff --stat [BASE]..[HEAD]
+
+## Instructions:
+1. **Analyze commit history**: Review all commits between base and head to understand the progression of changes
+2. **Examine file statistics**: Use diff stats to gauge scope and impact of changes
+3. **Synthesize changes**: Create a unified narrative from multiple commits if present
+4. **Identify patterns**: Look for related changes across commits and files
+5. **Craft title**: Summarize the overall impact, not just individual commits
+6. **Write comprehensive body**: Synthesize all commits into a coherent change description
+
+## Response Format:
+Provide only the formatted PR information without additional explanations:
+
+[TITLE]
+[BODY]
+
+%s
+---
+`, convention, templateBlock, wrapAdditionalContext(additionalContext))
+}
+
+func PRUser(params PRParams) string {
+	return fmt.Sprintf(`**Base branch:** %s
+**Head branch:** %s
+
+**Commit history:**
+%s
+
+**File changes:**
+%s
+
+**Related issues:**
+%s`, params.BaseBranch, params.HeadBranch, params.Log, params.DiffStats, strings.Join(params.Issues, "\n"))
+}
+
+const defaultPRConvention = `## PR Title Guidelines:
 - **Format**: Clear, concise, and descriptive (50-72 characters max)
 - **Style**: Use imperative mood ("Add feature" not "Added feature")
 - **Prefixes** (when applicable):
@@ -53,50 +102,5 @@ func PRSystem(template, additionalContext string) string {
 2. **How**: Key implementation details (if complex)
 3. **Testing**: How changes were tested
 4. **Breaking Changes**: Document any breaking changes
-5. **Related Issues**: **Combine** issue numbers found in the commit history with any **manually provided issues**. List them using keywords from GitHub (magic words), such as 'Closes #123' or 'Fixes PROJ-456'. If no issues are found in either source, omit this section. Use non-closing tags if the base branch is not a common default (such as 'main' or 'master')
-6. **Additional Notes**: Dependencies, follow-ups, or special considerations
-
-%s
-
-## Input Information:
-You will receive:
-- **Base branch**: The target branch for merging
-- **Head branch**: The source branch with changes
-- **Commit history**: Output from git log --pretty="format:%%h %%s%%n%%b%%n" [BASE]..[HEAD]
-- **File changes summary**: Output from git diff --stat [BASE]..[HEAD]
-
-## Instructions:
-1. **Analyze commit history**: Review all commits between base and head to understand the progression of changes
-2. **Examine file statistics**: Use diff stats to gauge scope and impact of changes
-3. **Synthesize changes**: Create a unified narrative from multiple commits if present
-4. **Identify patterns**: Look for related changes across commits and files
-5. **Craft title**: Summarize the overall impact, not just individual commits
-6. **Write comprehensive body**:
-   - Synthesize all commits into coherent change description
-   - Highlight significant file modifications from diff stats
-   - Address the collective impact of all changes
-
-## Response Format:
-Provide only the formatted PR information without additional explanations:
-
-[TITLE]
-[BODY]
-
-%s
----
-`, templateBlock, wrapAdditionalContext(additionalContext))
-}
-
-func PRUser(params PRParams) string {
-	return fmt.Sprintf(`**Base branch:** %s
-**Head branch:** %s
-
-**Commit history:**
-%s
-
-**File changes:**
-%s
-
-**Related issues:**
-%s`, params.BaseBranch, params.HeadBranch, params.Log, params.DiffStats, strings.Join(params.Issues, "\n"))
-}
+5. **Related Issues**: Combine issue numbers found in the commit history with any manually provided issues. List them using keywords such as 'Closes #123' or 'Fixes PROJ-456'. If no issues are found, omit this section. Use non-closing tags if the base branch is not a common default (such as 'main' or 'master')
+6. **Additional Notes**: Dependencies, follow-ups, or special considerations`

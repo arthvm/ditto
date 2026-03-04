@@ -4,22 +4,26 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/arthvm/ditto/internal/llm"
 	"github.com/arthvm/ditto/internal/prompt"
 )
 
 type PRDeps struct {
-	VCS      VCS
-	Platform Platform
-	Progress Progress
+	VCS             VCS
+	Platform        Platform
+	Provider        Provider
+	Progress        Progress
+	GenerateTimeout time.Duration
 }
 
 type PRParams struct {
 	BaseBranch        string
 	HeadBranch        string
-	ProviderName      string
+	Edit              bool
+	SystemPrompt      string
 	AdditionalContext string
+	TemplatePath      string
 	Issues            []string
 	IgnoreTemplate    bool
 	Draft             bool
@@ -33,11 +37,6 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 		if err != nil {
 			return fmt.Errorf("get current branch: %w", err)
 		}
-	}
-
-	provider, err := llm.GetProvider(params.ProviderName)
-	if err != nil {
-		return fmt.Errorf("get provider: %w", err)
 	}
 
 	log, err := deps.VCS.Log(ctx, params.BaseBranch, headBranch)
@@ -57,13 +56,13 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 
 	var template string
 	if !params.IgnoreTemplate {
-		template, err = deps.Platform.FindPRTemplate(root)
+		template, err = deps.Platform.FindPRTemplate(root, params.TemplatePath)
 		if err != nil {
 			return fmt.Errorf("get pr template: %w", err)
 		}
 	}
 
-	system := prompt.PRSystem(template, params.AdditionalContext)
+	system := prompt.PRSystem(params.SystemPrompt, template, params.AdditionalContext)
 	user := prompt.PRUser(prompt.PRParams{
 		HeadBranch: headBranch,
 		BaseBranch: params.BaseBranch,
@@ -74,10 +73,15 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 
 	deps.Progress.StartSpinner(" Generating PR...")
 
-	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
+	timeout := deps.GenerateTimeout
+	if timeout == 0 {
+		timeout = generateTimeout
+	}
+
+	genCtx, genCancel := context.WithTimeout(ctx, timeout)
 	defer genCancel()
 
-	msg, err := provider.Generate(genCtx, system, user)
+	msg, err := deps.Provider.Generate(genCtx, system, user)
 
 	deps.Progress.StopSpinner()
 
@@ -95,7 +99,7 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 		Body:      body,
 		Head:      headBranch,
 		Base:      params.BaseBranch,
-		UseEditor: true,
+		UseEditor: params.Edit,
 		Draft:     params.Draft,
 	})
 }
