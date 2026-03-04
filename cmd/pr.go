@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	baseBranchFlag     = "base"
+	headBranchFlag     = "head"
 	noTemplateFlagName = "no-template"
 	draftFlagName      = "draft"
 )
@@ -75,6 +77,12 @@ var prCmd = &cobra.Command{
 }
 
 func init() {
+	prCmd.Flags().
+		String(baseBranchFlag, "main", "The destination branch")
+
+	prCmd.Flags().
+		String(headBranchFlag, "", "The origin branch")
+
 	prCmd.Flags().
 		Bool(noTemplateFlagName, false, "Set this flag to ignore any template defined in the repo")
 
