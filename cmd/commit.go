@@ -50,6 +50,7 @@ var commitCmd = &cobra.Command{
 		}, workflow.CommitParams{
 			Amend:             amend,
 			All:               all,
+			Edit:              appConfig.Commit.Edit != nil && *appConfig.Commit.Edit,
 			SystemPrompt:      appConfig.Commit.Prompt,
 			AdditionalContext: additionalPrompt,
 			Issues:            issues,

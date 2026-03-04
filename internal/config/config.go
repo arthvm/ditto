@@ -50,11 +50,13 @@ func (l *LLMConfig) UnmarshalYAML(value *yaml.Node) error {
 
 type CommitConfig struct {
 	Prompt string `yaml:"prompt"`
+	Edit   *bool  `yaml:"edit"`
 }
 
 type PRConfig struct {
 	Prompt       string `yaml:"prompt"`
 	TemplatePath string `yaml:"template_path"`
+	Edit         *bool  `yaml:"edit"`
 }
 
 type GeminiConfig struct {
@@ -67,12 +69,19 @@ type OllamaConfig struct {
 }
 
 func defaults() Config {
+	editTrue := true
 	return Config{
 		Provider:   "gemini",
 		Model:      "gemini-2.5-flash",
 		BaseBranch: "main",
 		LLM: LLMConfig{
 			Timeout: 2 * time.Minute,
+		},
+		Commit: CommitConfig{
+			Edit: &editTrue,
+		},
+		PR: PRConfig{
+			Edit: &editTrue,
 		},
 		Ollama: OllamaConfig{
 			Host:  "http://localhost:11434",
@@ -145,5 +154,13 @@ func mergeFromEnv(cfg *Config) {
 	}
 	if v, ok := os.LookupEnv("OLLAMA_MODEL"); ok {
 		cfg.Ollama.Model = v
+	}
+	if v, ok := os.LookupEnv("DITTO_COMMIT_EDIT"); ok {
+		b := v != "false" && v != "0"
+		cfg.Commit.Edit = &b
+	}
+	if v, ok := os.LookupEnv("DITTO_PR_EDIT"); ok {
+		b := v != "false" && v != "0"
+		cfg.PR.Edit = &b
 	}
 }

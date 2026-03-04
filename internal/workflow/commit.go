@@ -11,16 +11,16 @@ import (
 )
 
 type CommitDeps struct {
-	VCS      VCS
-	Provider Provider
-	Progress Progress
-	// GenerateTimeout bounds the LLM call. Defaults to generateTimeout if zero.
+	VCS             VCS
+	Provider        Provider
+	Progress        Progress
 	GenerateTimeout time.Duration
 }
 
 type CommitParams struct {
 	Amend             bool
 	All               bool
+	Edit              bool
 	SystemPrompt      string
 	AdditionalContext string
 	Issues            []string
@@ -63,5 +63,5 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 		return fmt.Errorf("generate git commit: %w", err)
 	}
 
-	return deps.VCS.CommitWithMessage(ctx, msg, params.Amend, params.All)
+	return deps.VCS.CommitWithMessage(ctx, msg, params.Amend, params.All, params.Edit)
 }

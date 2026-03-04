@@ -40,9 +40,9 @@ type VCS interface {
 	// Root returns the absolute path to the repository root.
 	Root(ctx context.Context) (string, error)
 
-	// CommitWithMessage creates a commit with the given message, opening
-	// the user's editor for final editing.
-	CommitWithMessage(ctx context.Context, msg string, amend, all bool) error
+	// CommitWithMessage creates a commit with the given message. When edit is
+	// true, the user's editor is opened for final review before committing.
+	CommitWithMessage(ctx context.Context, msg string, amend, all, edit bool) error
 }
 
 // OpenPRParams holds the parameters for opening a pull request.

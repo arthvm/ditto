@@ -64,6 +64,7 @@ var prCmd = &cobra.Command{
 		}, workflow.PRParams{
 			BaseBranch:        baseBranch,
 			HeadBranch:        headBranch,
+			Edit:              appConfig.PR.Edit != nil && *appConfig.PR.Edit,
 			SystemPrompt:      appConfig.PR.Prompt,
 			AdditionalContext: additionalPrompt,
 			TemplatePath:      appConfig.PR.TemplatePath,

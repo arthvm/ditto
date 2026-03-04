@@ -10,17 +10,17 @@ import (
 )
 
 type PRDeps struct {
-	VCS      VCS
-	Platform Platform
-	Provider Provider
-	Progress Progress
-	// GenerateTimeout bounds the LLM call. Defaults to generateTimeout if zero.
+	VCS             VCS
+	Platform        Platform
+	Provider        Provider
+	Progress        Progress
 	GenerateTimeout time.Duration
 }
 
 type PRParams struct {
 	BaseBranch        string
 	HeadBranch        string
+	Edit              bool
 	SystemPrompt      string
 	AdditionalContext string
 	TemplatePath      string
@@ -99,7 +99,7 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 		Body:      body,
 		Head:      headBranch,
 		Base:      params.BaseBranch,
-		UseEditor: true,
+		UseEditor: params.Edit,
 		Draft:     params.Draft,
 	})
 }
