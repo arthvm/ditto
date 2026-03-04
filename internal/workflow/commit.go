@@ -6,19 +6,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arthvm/ditto/internal/llm"
 	"github.com/arthvm/ditto/internal/prompt"
 )
 
 type CommitDeps struct {
 	VCS      VCS
+	Provider Provider
 	Progress Progress
 }
 
 type CommitParams struct {
 	Amend             bool
 	All               bool
-	ProviderName      string
 	AdditionalContext string
 	Issues            []string
 }
@@ -36,11 +35,6 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 		return errors.New("no staged changes")
 	}
 
-	provider, err := llm.GetProvider(params.ProviderName)
-	if err != nil {
-		return fmt.Errorf("get provider: %w", err)
-	}
-
 	system := prompt.CommitSystem(params.AdditionalContext)
 	user := prompt.CommitUser(prompt.CommitParams{
 		Diff:   diff,
@@ -52,7 +46,7 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
 	defer genCancel()
 
-	msg, err := provider.Generate(genCtx, system, user)
+	msg, err := deps.Provider.Generate(genCtx, system, user)
 
 	deps.Progress.StopSpinner()
 

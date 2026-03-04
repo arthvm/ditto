@@ -42,18 +42,13 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get issues flag: %w", err)
 		}
 
-		providerName, err := cmd.Flags().GetString(providerFlagName)
-		if err != nil {
-			return fmt.Errorf("get provider flag: %w", err)
-		}
-
 		return workflow.Commit(cmd.Context(), workflow.CommitDeps{
 			VCS:      vcs.Git{},
+			Provider: provider,
 			Progress: ui.Default(),
 		}, workflow.CommitParams{
 			Amend:             amend,
 			All:               all,
-			ProviderName:      providerName,
 			AdditionalContext: additionalPrompt,
 			Issues:            issues,
 		})

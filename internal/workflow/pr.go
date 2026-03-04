@@ -5,20 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arthvm/ditto/internal/llm"
 	"github.com/arthvm/ditto/internal/prompt"
 )
 
 type PRDeps struct {
 	VCS      VCS
 	Platform Platform
+	Provider Provider
 	Progress Progress
 }
 
 type PRParams struct {
 	BaseBranch        string
 	HeadBranch        string
-	ProviderName      string
 	AdditionalContext string
 	Issues            []string
 	IgnoreTemplate    bool
@@ -33,11 +32,6 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 		if err != nil {
 			return fmt.Errorf("get current branch: %w", err)
 		}
-	}
-
-	provider, err := llm.GetProvider(params.ProviderName)
-	if err != nil {
-		return fmt.Errorf("get provider: %w", err)
 	}
 
 	log, err := deps.VCS.Log(ctx, params.BaseBranch, headBranch)
@@ -77,7 +71,7 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
 	defer genCancel()
 
-	msg, err := provider.Generate(genCtx, system, user)
+	msg, err := deps.Provider.Generate(genCtx, system, user)
 
 	deps.Progress.StopSpinner()
 

@@ -10,6 +10,11 @@ import (
 // by an expired deadline.
 const generateTimeout = 2 * time.Minute
 
+// Provider generates text from a system prompt and user prompt.
+type Provider interface {
+	Generate(ctx context.Context, system, user string) (string, error)
+}
+
 // Progress reports long-running operation status to the user.
 // Implementations control how progress is displayed: a CLI spinner,
 // a TUI progress bar, or a no-op for non-interactive use.

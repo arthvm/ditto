@@ -6,16 +6,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 )
 
-func (p *provider) Generate(ctx context.Context, system, user string) (string, error) {
-	baseURL, exists := os.LookupEnv("OLLAMA_HOST")
-	if !exists {
-		baseURL = "http://localhost:11434"
-	}
+type Provider struct {
+	host  string
+	model string
+}
 
-	url := fmt.Sprintf("%s/api/generate", baseURL)
+func New(host, model string) *Provider {
+	return &Provider{host: host, model: model}
+}
+
+type generateRequestBody struct {
+	Model  string `json:"model"`
+	System string `json:"system"`
+	Prompt string `json:"prompt"`
+	Stream bool   `json:"stream"`
+	Raw    bool   `json:"raw"`
+}
+
+type generateResponseBody struct {
+	Response string `json:"response"`
+}
+
+func (p *Provider) Generate(ctx context.Context, system, user string) (string, error) {
+	url := fmt.Sprintf("%s/api/generate", p.host)
 
 	body := generateRequestBody{
 		Model:  p.model,

@@ -25,9 +25,9 @@ var prCmd = &cobra.Command{
 	Use:   "pr",
 	Short: "Used to generated a pr title and body from commit diff between branches",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		baseBranch, err := cmd.Flags().GetString(baseBranchFlag)
-		if err != nil {
-			return fmt.Errorf("get base branch: %w", err)
+		baseBranch := appConfig.BaseBranch
+		if cmd.Flags().Changed(baseBranchFlag) {
+			baseBranch, _ = cmd.Flags().GetString(baseBranchFlag)
 		}
 
 		headBranch, err := cmd.Flags().GetString(headBranchFlag)
@@ -55,19 +55,14 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("get issues flag: %w", err)
 		}
 
-		providerName, err := cmd.Flags().GetString(providerFlagName)
-		if err != nil {
-			return fmt.Errorf("get provider flag: %w", err)
-		}
-
 		return workflow.CreatePR(cmd.Context(), workflow.PRDeps{
 			VCS:      vcs.Git{},
 			Platform: platform.GitHub{},
+			Provider: provider,
 			Progress: ui.Default(),
 		}, workflow.PRParams{
 			BaseBranch:        baseBranch,
 			HeadBranch:        headBranch,
-			ProviderName:      providerName,
 			AdditionalContext: additionalPrompt,
 			Issues:            issues,
 			IgnoreTemplate:    ignoreTemplate,
@@ -78,7 +73,7 @@ var prCmd = &cobra.Command{
 
 func init() {
 	prCmd.Flags().
-		String(baseBranchFlag, "main", "The destination branch")
+		String(baseBranchFlag, "", "The destination branch")
 
 	prCmd.Flags().
 		String(headBranchFlag, "", "The origin branch")
