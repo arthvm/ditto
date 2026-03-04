@@ -28,8 +28,8 @@ func run(ctx context.Context, args ...string) (string, error) {
 
 	res, err := cmd.Output()
 	if err != nil {
-		var exitErr exec.ExitError
-		if errors.Is(err, &exitErr) && len(exitErr.Stderr) > 0 {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
 			return "", fmt.Errorf("git %s: %s", args[0], string(exitErr.Stderr))
 		}
 		return "", fmt.Errorf("git %s: %w", args[0], err)
