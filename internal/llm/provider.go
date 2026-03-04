@@ -12,7 +12,7 @@ var (
 	ErrNoSupport  = errors.New("not supported with this model")
 )
 
-type GeneratePrParams struct {
+type GeneratePRParams struct {
 	HeadBranch        string
 	BaseBranch        string
 	Log               string
@@ -30,7 +30,7 @@ type GenerateCommitParams struct {
 
 type Provider interface {
 	GenerateCommitMessage(context.Context, GenerateCommitParams) (string, error)
-	GeneratePr(context.Context, GeneratePrParams) (string, error)
+	GeneratePR(context.Context, GeneratePRParams) (string, error)
 }
 
 var providers map[string]Provider

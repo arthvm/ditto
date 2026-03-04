@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-type OpenPrParams struct {
+type OpenPRParams struct {
 	Title     string
 	Head      string
 	Base      string
@@ -15,7 +15,7 @@ type OpenPrParams struct {
 	Draft     bool
 }
 
-func OpenPr(ctx context.Context, params OpenPrParams) error {
+func OpenPR(ctx context.Context, params OpenPRParams) error {
 	args := []string{
 		"--title", params.Title,
 		"--body", params.Body,

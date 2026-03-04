@@ -5,8 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -21,27 +19,6 @@ const (
 	noTemplateFlagName = "no-template"
 	draftFlagName      = "draft"
 )
-
-func findPRTemplate(root string) (string, error) {
-	paths := []string{
-		filepath.Join(root, ".github", "pull_request_template.md"),
-		filepath.Join(root, "docs", "pull_request_template.md"),
-		filepath.Join(root, "PULL_REQUEST_TEMPLATE.md"),
-	}
-
-	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			content, err := os.ReadFile(p)
-			if err != nil {
-				return "", err
-			}
-
-			return string(content), nil
-		}
-	}
-
-	return "", nil
-}
 
 var prCmd = &cobra.Command{
 	Use:   "pr",
@@ -120,13 +97,13 @@ var prCmd = &cobra.Command{
 
 		var template string
 		if !ignoreTemplate {
-			template, err = findPRTemplate(root)
+			template, err = git.FindPRTemplate(root)
 			if err != nil {
 				return fmt.Errorf("get pr template: %w", err)
 			}
 		}
 
-		msg, err := provider.GeneratePr(cmd.Context(), llm.GeneratePrParams{
+		msg, err := provider.GeneratePR(cmd.Context(), llm.GeneratePRParams{
 			HeadBranch:        headBranch,
 			BaseBranch:        baseBranch,
 			Log:               log,
@@ -139,15 +116,15 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("generate pr: %w", err)
 		}
 
-		nLine := strings.Index(msg, "\n")
-		if nLine == -1 {
+		before, after, ok := strings.Cut(msg, "\n")
+		if !ok {
 			return fmt.Errorf("generate pr: failed to generate body")
 		}
-		title := strings.TrimSpace(msg[:nLine])
-		body := strings.TrimSpace(msg[nLine+1:])
+		title := strings.TrimSpace(before)
+		body := strings.TrimSpace(after)
 
 		s.Stop()
-		if err := git.OpenPr(cmd.Context(), git.OpenPrParams{
+		if err := git.OpenPR(cmd.Context(), git.OpenPRParams{
 			Title:     title,
 			Body:      body,
 			Head:      headBranch,

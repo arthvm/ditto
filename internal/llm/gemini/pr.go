@@ -15,7 +15,7 @@ type prSystemPromptParams struct {
 	AdditionalContext string
 }
 
-func getPrSystemPrompt(params prSystemPromptParams) string {
+func getPRSystemPrompt(params prSystemPromptParams) string {
 	var template string
 	var additionalContext string
 
@@ -93,9 +93,9 @@ Provide only the formatted PR information without additional explanations:
 `, template, additionalContext)
 }
 
-func (p *provider) GeneratePr(
+func (p *provider) GeneratePR(
 	ctx context.Context,
-	params llm.GeneratePrParams,
+	params llm.GeneratePRParams,
 ) (string, error) {
 	client, err := p.getClient(ctx)
 	if err != nil {
@@ -104,7 +104,7 @@ func (p *provider) GeneratePr(
 
 	config := &genai.GenerateContentConfig{
 		SystemInstruction: genai.NewContentFromText(
-			getPrSystemPrompt(prSystemPromptParams{
+			getPRSystemPrompt(prSystemPromptParams{
 				Template:          params.Template,
 				AdditionalContext: params.AdditionalContext,
 			}),
