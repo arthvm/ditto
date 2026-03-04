@@ -10,13 +10,14 @@ import (
 )
 
 type Config struct {
-	Provider   string       `yaml:"provider"`
-	BaseBranch string       `yaml:"base_branch"`
-	LLM        LLMConfig    `yaml:"llm"`
-	Commit     CommitConfig `yaml:"commit"`
-	PR         PRConfig     `yaml:"pr"`
-	Gemini     GeminiConfig `yaml:"gemini"`
-	Ollama     OllamaConfig `yaml:"ollama"`
+	Provider   string        `yaml:"provider"`
+	BaseBranch string        `yaml:"base_branch"`
+	LLM        LLMConfig     `yaml:"llm"`
+	Commit     CommitConfig  `yaml:"commit"`
+	PR         PRConfig      `yaml:"pr"`
+	Gemini     GeminiConfig  `yaml:"gemini"`
+	Ollama     OllamaConfig  `yaml:"ollama"`
+	Copilot    CopilotConfig `yaml:"copilot"`
 }
 
 type LLMConfig struct {
@@ -68,12 +69,18 @@ type OllamaConfig struct {
 	Model string `yaml:"model"`
 }
 
-// SetModelForProvider sets the model on the currently active provider's config.
-// Used by CLI flag handling so --model overrides the right provider.
+type CopilotConfig struct {
+	APIKey   string `yaml:"api_key"`
+	ClientID string `yaml:"client_id"`
+	Model    string `yaml:"model"`
+}
+
 func (c *Config) SetModelForProvider(model string) {
 	switch c.Provider {
 	case "ollama":
 		c.Ollama.Model = model
+	case "copilot":
+		c.Copilot.Model = model
 	default:
 		c.Gemini.Model = model
 	}
@@ -82,7 +89,7 @@ func (c *Config) SetModelForProvider(model string) {
 func defaults() Config {
 	editTrue := true
 	return Config{
-		Provider:   "gemini",
+		Provider:   "copilot",
 		BaseBranch: "main",
 		LLM: LLMConfig{
 			Timeout: 2 * time.Minute,
@@ -99,6 +106,9 @@ func defaults() Config {
 		Ollama: OllamaConfig{
 			Host:  "http://localhost:11434",
 			Model: "tavernari/git-commit-message",
+		},
+		Copilot: CopilotConfig{
+			Model: "gpt-4o",
 		},
 	}
 }

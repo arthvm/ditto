@@ -54,7 +54,7 @@ Create `~/.config/ditto/config.yaml` for user-wide settings, or `.ditto.yaml` in
 
 ```yaml
 # Provider selection
-provider: gemini            # gemini (default), ollama
+provider: gemini            # gemini (default), ollama, copilot
 
 # Base branch for PR diffs
 base_branch: main
@@ -86,6 +86,9 @@ gemini:
 ollama:
   host: "http://localhost:11434"
   model: "tavernari/git-commit-message"
+
+copilot:
+  model: gpt-4o             # default model for Copilot
 ```
 
 ### Environment variables
@@ -107,7 +110,7 @@ ollama:
 
 All commands accept these global flags:
 
-- `--provider`: select the LLM provider (`gemini`, `ollama`).
+- `--provider`: select the LLM provider (`gemini`, `ollama`, `copilot`).
 - `--model`: override the model for the active provider (e.g. `--provider gemini --model gemini-2.5-pro`).
 - `--prompt`: add extra natural-language context for the model.
 - `--issues`: repeatable flag for issue IDs; they show up in commit footers and PR bodies. Example: `--issues 123 --issues PROJ-42`.
@@ -174,6 +177,7 @@ The `--prompt` CLI flag provides **additional** context on top of the system pro
 | Provider | Alias | Commit | PR | Default model | Notes |
 | --- | --- | --- | --- | --- | --- |
 | Gemini | `gemini` (default) | Yes | Yes | `gemini-2.5-flash` | Requires a Gemini API key. |
+| GitHub Copilot | `copilot` | Yes | Yes | `gpt-4o` | Authenticates via GitHub App device flow. Requires a Copilot subscription. |
 | Ollama | `ollama` | Yes | Yes | `tavernari/git-commit-message` | Local Ollama server. |
 
 Each provider has its own default model configured in its config section. Use `--model` to override on a per-invocation basis:
@@ -181,6 +185,7 @@ Each provider has its own default model configured in its config section. Use `-
 ```sh
 ditto commit --provider gemini --model gemini-2.5-pro
 ditto commit --provider ollama --model codellama
+ditto pr --provider copilot --model gpt-4o
 ```
 
 ## Troubleshooting
