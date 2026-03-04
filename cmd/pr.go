@@ -63,6 +63,7 @@ var prCmd = &cobra.Command{
 		}, workflow.PRParams{
 			BaseBranch:        baseBranch,
 			HeadBranch:        headBranch,
+			SystemPrompt:      appConfig.PR.Prompt,
 			AdditionalContext: additionalPrompt,
 			Issues:            issues,
 			IgnoreTemplate:    ignoreTemplate,

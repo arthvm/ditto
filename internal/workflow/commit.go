@@ -18,6 +18,7 @@ type CommitDeps struct {
 type CommitParams struct {
 	Amend             bool
 	All               bool
+	SystemPrompt      string
 	AdditionalContext string
 	Issues            []string
 }
@@ -35,7 +36,7 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 		return errors.New("no staged changes")
 	}
 
-	system := prompt.CommitSystem(params.AdditionalContext)
+	system := prompt.CommitSystem(params.SystemPrompt, params.AdditionalContext)
 	user := prompt.CommitUser(prompt.CommitParams{
 		Diff:   diff,
 		Issues: params.Issues,

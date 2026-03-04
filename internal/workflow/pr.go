@@ -18,6 +18,7 @@ type PRDeps struct {
 type PRParams struct {
 	BaseBranch        string
 	HeadBranch        string
+	SystemPrompt      string
 	AdditionalContext string
 	Issues            []string
 	IgnoreTemplate    bool
@@ -57,7 +58,7 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 		}
 	}
 
-	system := prompt.PRSystem(template, params.AdditionalContext)
+	system := prompt.PRSystem(params.SystemPrompt, template, params.AdditionalContext)
 	user := prompt.PRUser(prompt.PRParams{
 		HeadBranch: headBranch,
 		BaseBranch: params.BaseBranch,

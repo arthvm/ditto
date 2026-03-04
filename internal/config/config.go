@@ -12,8 +12,18 @@ type Config struct {
 	Provider   string       `yaml:"provider"`
 	Model      string       `yaml:"model"`
 	BaseBranch string       `yaml:"base_branch"`
+	Commit     CommitConfig `yaml:"commit"`
+	PR         PRConfig     `yaml:"pr"`
 	Gemini     GeminiConfig `yaml:"gemini"`
 	Ollama     OllamaConfig `yaml:"ollama"`
+}
+
+type CommitConfig struct {
+	Prompt string `yaml:"prompt"`
+}
+
+type PRConfig struct {
+	Prompt string `yaml:"prompt"`
 }
 
 type GeminiConfig struct {
