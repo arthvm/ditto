@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 
 	"github.com/arthvm/ditto/internal/git"
@@ -87,12 +86,7 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get provider: %w", err)
 		}
 
-		s := spinner.New(
-			spinner.CharSets[14],
-			time.Millisecond*100,
-			spinner.WithColor("yellow"),
-		)
-		s.Suffix = " Generating commit messaging..."
+		s := newSpinner(" Generating commit messaging...")
 
 		s.Start()
 		defer s.Stop()

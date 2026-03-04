@@ -8,9 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 
 	"github.com/arthvm/ditto/internal/git"
@@ -96,12 +94,7 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("get provider: %w", err)
 		}
 
-		s := spinner.New(
-			spinner.CharSets[14],
-			time.Millisecond*100,
-			spinner.WithColor("yellow"),
-		)
-		s.Suffix = " Generating PR..."
+		s := newSpinner(" Generating PR...")
 
 		s.Start()
 		defer s.Stop()
