@@ -10,7 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/arthvm/ditto/internal/platform"
 	"github.com/arthvm/ditto/internal/ui"
+	"github.com/arthvm/ditto/internal/vcs"
 	"github.com/arthvm/ditto/internal/workflow"
 )
 
@@ -58,10 +60,14 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("get provider flag: %w", err)
 		}
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*2)
+		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*5)
 		defer cancel()
 
-		return workflow.CreatePR(ctx, ui.Default(), workflow.PRParams{
+		return workflow.CreatePR(ctx, workflow.PRDeps{
+			VCS:      vcs.Git{},
+			Platform: platform.GitHub{},
+			Progress: ui.Default(),
+		}, workflow.PRParams{
 			BaseBranch:        baseBranch,
 			HeadBranch:        headBranch,
 			ProviderName:      providerName,

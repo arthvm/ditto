@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arthvm/ditto/internal/git"
 	"github.com/arthvm/ditto/internal/llm"
+	"github.com/arthvm/ditto/internal/prompt"
 )
+
+type CommitDeps struct {
+	VCS      VCS
+	Progress Progress
+}
 
 type CommitParams struct {
 	Amend             bool
@@ -18,10 +23,8 @@ type CommitParams struct {
 	Issues            []string
 }
 
-func Commit(ctx context.Context, progress Progress, params CommitParams) error {
-	diffOpts := buildDiffOptions(params.Amend, params.All)
-
-	diff, err := git.Diff(ctx, diffOpts...)
+func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
+	diff, err := deps.VCS.CommitDiff(ctx, params.Amend, params.All)
 	if err != nil {
 		return fmt.Errorf("staged changes: %w", err)
 	}
@@ -38,40 +41,21 @@ func Commit(ctx context.Context, progress Progress, params CommitParams) error {
 		return fmt.Errorf("get provider: %w", err)
 	}
 
-	progress.StartSpinner(" Generating commit message...")
-
-	msg, err := provider.GenerateCommitMessage(ctx, llm.GenerateCommitParams{
-		Diff:              diff,
-		Issues:            params.Issues,
-		AdditionalContext: params.AdditionalContext,
+	system := prompt.CommitSystem(params.AdditionalContext)
+	user := prompt.CommitUser(prompt.CommitParams{
+		Diff:   diff,
+		Issues: params.Issues,
 	})
 
-	progress.StopSpinner()
+	deps.Progress.StartSpinner(" Generating commit message...")
+
+	msg, err := provider.Generate(ctx, system, user)
+
+	deps.Progress.StopSpinner()
 
 	if err != nil {
 		return fmt.Errorf("generate git commit: %w", err)
 	}
 
-	var opts []git.CommitOption
-	if params.Amend {
-		opts = append(opts, git.Amend)
-	}
-	if params.All {
-		opts = append(opts, git.All)
-	}
-
-	return git.CommitWithMessage(ctx, msg, opts...)
-}
-
-func buildDiffOptions(amend, all bool) []git.DiffArg {
-	switch {
-	case amend && all:
-		return []git.DiffArg{git.Target("HEAD^")}
-	case amend:
-		return []git.DiffArg{git.Staged, git.Target("HEAD^")}
-	case all:
-		return []git.DiffArg{git.Target("HEAD")}
-	default:
-		return []git.DiffArg{git.Staged}
-	}
+	return deps.VCS.CommitWithMessage(ctx, msg, params.Amend, params.All)
 }

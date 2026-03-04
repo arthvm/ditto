@@ -14,7 +14,7 @@ type LogOption string
 func (o LogOption) String() string { return string(o) }
 func (o LogOption) isLogArg()      {}
 
-func Log(ctx context.Context, options ...logArg) (string, error) {
+func LogRange(ctx context.Context, options ...logArg) (string, error) {
 	args := make([]string, len(options))
 	for i, opt := range options {
 		args[i] = opt.String()

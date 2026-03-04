@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/arthvm/ditto/internal/ui"
+	"github.com/arthvm/ditto/internal/vcs"
 	"github.com/arthvm/ditto/internal/workflow"
 )
 
@@ -48,10 +49,13 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get provider flag: %w", err)
 		}
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*1)
+		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*3)
 		defer cancel()
 
-		return workflow.Commit(ctx, ui.Default(), workflow.CommitParams{
+		return workflow.Commit(ctx, workflow.CommitDeps{
+			VCS:      vcs.Git{},
+			Progress: ui.Default(),
+		}, workflow.CommitParams{
 			Amend:             amend,
 			All:               all,
 			ProviderName:      providerName,

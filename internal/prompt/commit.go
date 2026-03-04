@@ -1,22 +1,18 @@
-package gemini
+package prompt
 
 import (
-	"context"
 	"fmt"
 	"strings"
-
-	"google.golang.org/genai"
-
-	"github.com/arthvm/ditto/internal/llm"
 )
 
-func getCommitSystemPrompt(additionalContext string) string {
-	if additionalContext != "" {
-		additionalContext = wrapAdditionalContext(additionalContext)
-	}
+type CommitParams struct {
+	Diff              string
+	Issues            []string
+	AdditionalContext string
+}
 
-	return fmt.Sprintf(`
-You are a Git and Conventional Commits expert. Your task is to analyze a Git diff and generate a commit message strictly following the Conventional Commits standard.
+func CommitSystem(additionalContext string) string {
+	return fmt.Sprintf(`You are a Git and Conventional Commits expert. Your task is to analyze a Git diff and generate a commit message strictly following the Conventional Commits standard.
 
 ## Conventional Commits Rules:
 - **Format**: '<type>(<scope>): <description>'
@@ -61,43 +57,15 @@ Provide only the final commit message, without additional explanations.
 %s
 
 ---
-`, additionalContext)
+`, wrapAdditionalContext(additionalContext))
 }
 
-func (p *provider) GenerateCommitMessage(
-	ctx context.Context,
-	params llm.GenerateCommitParams,
-) (string, error) {
-	client, err := p.getClient(ctx)
-	if err != nil {
-		return "", fmt.Errorf("generate client: %w", err)
-	}
-
-	config := &genai.GenerateContentConfig{
-		SystemInstruction: genai.NewContentFromText(
-			getCommitSystemPrompt(params.AdditionalContext),
-			genai.RoleUser,
-		),
-	}
-
-	prompt := fmt.Sprintf(`
-	--- DIFF START ---
-	%s
-	--- DIFF END ---
-	--- RELATED ISSUES START ---
-	%s
-	--- RELATED ISSUES END ---
-		`, params.Diff, strings.Join(params.Issues, "\n"))
-
-	result, err := client.Models.GenerateContent(
-		ctx,
-		p.model,
-		genai.Text(prompt),
-		config,
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return result.Text(), nil
+func CommitUser(params CommitParams) string {
+	return fmt.Sprintf(`--- DIFF START ---
+%s
+--- DIFF END ---
+--- RELATED ISSUES START ---
+%s
+--- RELATED ISSUES END ---
+`, params.Diff, strings.Join(params.Issues, "\n"))
 }

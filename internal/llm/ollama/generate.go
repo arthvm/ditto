@@ -7,24 +7,20 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/arthvm/ditto/internal/llm"
 )
 
-func (p *provider) GenerateCommitMessage(
-	ctx context.Context,
-	params llm.GenerateCommitParams,
-) (string, error) {
-	baseUrl, exists := os.LookupEnv("OLLAMA_HOST")
+func (p *provider) Generate(ctx context.Context, system, user string) (string, error) {
+	baseURL, exists := os.LookupEnv("OLLAMA_HOST")
 	if !exists {
-		baseUrl = "http://localhost:11434"
+		baseURL = "http://localhost:11434"
 	}
 
-	url := fmt.Sprintf("%s/api/generate", baseUrl)
+	url := fmt.Sprintf("%s/api/generate", baseURL)
 
 	body := generateRequestBody{
 		Model:  p.model,
-		Prompt: params.Diff,
+		System: system,
+		Prompt: user,
 		Stream: false,
 		Raw:    false,
 	}

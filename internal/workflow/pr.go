@@ -5,9 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arthvm/ditto/internal/git"
 	"github.com/arthvm/ditto/internal/llm"
+	"github.com/arthvm/ditto/internal/prompt"
 )
+
+type PRDeps struct {
+	VCS      VCS
+	Platform Platform
+	Progress Progress
+}
 
 type PRParams struct {
 	BaseBranch        string
@@ -19,11 +25,11 @@ type PRParams struct {
 	Draft             bool
 }
 
-func CreatePR(ctx context.Context, progress Progress, params PRParams) error {
+func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 	headBranch := params.HeadBranch
 	if headBranch == "" {
 		var err error
-		headBranch, err = git.CurrentBranch(ctx)
+		headBranch, err = deps.VCS.CurrentBranch(ctx)
 		if err != nil {
 			return fmt.Errorf("get current branch: %w", err)
 		}
@@ -34,42 +40,43 @@ func CreatePR(ctx context.Context, progress Progress, params PRParams) error {
 		return fmt.Errorf("get provider: %w", err)
 	}
 
-	log, err := git.Log(ctx, git.Branches(params.BaseBranch, headBranch))
+	log, err := deps.VCS.Log(ctx, params.BaseBranch, headBranch)
 	if err != nil {
 		return fmt.Errorf("get log: %w", err)
 	}
 
-	diff, err := git.Diff(ctx, git.Stats, git.Branches(params.BaseBranch, headBranch))
+	diff, err := deps.VCS.DiffStats(ctx, params.BaseBranch, headBranch)
 	if err != nil {
 		return fmt.Errorf("diff stats: %w", err)
 	}
 
-	root, err := git.Root(ctx)
+	root, err := deps.VCS.Root(ctx)
 	if err != nil {
 		return fmt.Errorf("get root dir: %w", err)
 	}
 
 	var template string
 	if !params.IgnoreTemplate {
-		template, err = git.FindPRTemplate(root)
+		template, err = deps.Platform.FindPRTemplate(root)
 		if err != nil {
 			return fmt.Errorf("get pr template: %w", err)
 		}
 	}
 
-	progress.StartSpinner(" Generating PR...")
-
-	msg, err := provider.GeneratePR(ctx, llm.GeneratePRParams{
-		HeadBranch:        headBranch,
-		BaseBranch:        params.BaseBranch,
-		Log:               log,
-		DiffStats:         diff,
-		AdditionalContext: params.AdditionalContext,
-		Issues:            params.Issues,
-		Template:          template,
+	system := prompt.PRSystem(template, params.AdditionalContext)
+	user := prompt.PRUser(prompt.PRParams{
+		HeadBranch: headBranch,
+		BaseBranch: params.BaseBranch,
+		Log:        log,
+		DiffStats:  diff,
+		Issues:     params.Issues,
 	})
 
-	progress.StopSpinner()
+	deps.Progress.StartSpinner(" Generating PR...")
+
+	msg, err := provider.Generate(ctx, system, user)
+
+	deps.Progress.StopSpinner()
 
 	if err != nil {
 		return fmt.Errorf("generate pr: %w", err)
@@ -80,7 +87,7 @@ func CreatePR(ctx context.Context, progress Progress, params PRParams) error {
 		return err
 	}
 
-	return git.OpenPR(ctx, git.OpenPRParams{
+	return deps.Platform.OpenPR(ctx, OpenPRParams{
 		Title:     title,
 		Body:      body,
 		Head:      headBranch,
