@@ -68,7 +68,7 @@ func (p *provider) GenerateCommitMessage(
 	ctx context.Context,
 	params llm.GenerateCommitParams,
 ) (string, error) {
-	client, err := genai.NewClient(ctx, nil)
+	client, err := p.getClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("generate client: %w", err)
 	}
@@ -80,7 +80,7 @@ func (p *provider) GenerateCommitMessage(
 		),
 	}
 
-	context := fmt.Sprintf(`
+	prompt := fmt.Sprintf(`
 	--- DIFF START ---
 	%s
 	--- DIFF END ---
@@ -92,7 +92,7 @@ func (p *provider) GenerateCommitMessage(
 	result, err := client.Models.GenerateContent(
 		ctx,
 		p.model,
-		genai.Text(context),
+		genai.Text(prompt),
 		config,
 	)
 	if err != nil {

@@ -1,6 +1,12 @@
 package gemini
 
-import "github.com/arthvm/ditto/internal/llm"
+import (
+	"context"
+	"sync"
+
+	"github.com/arthvm/ditto/internal/llm"
+	"google.golang.org/genai"
+)
 
 type Model = string
 
@@ -11,7 +17,10 @@ const (
 )
 
 type provider struct {
-	model Model
+	model      Model
+	clientOnce sync.Once
+	client     *genai.Client
+	clientErr  error
 }
 
 func init() {
@@ -26,4 +35,12 @@ func init() {
 	llm.Register("gemini-flash-lite", &provider{
 		model: GeminiFlashLite,
 	})
+}
+
+func (p *provider) getClient(ctx context.Context) (*genai.Client, error) {
+	p.clientOnce.Do(func() {
+		p.client, p.clientErr = genai.NewClient(ctx, nil)
+	})
+
+	return p.client, p.clientErr
 }

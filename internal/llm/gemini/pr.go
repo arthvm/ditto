@@ -97,7 +97,7 @@ func (p *provider) GeneratePr(
 	ctx context.Context,
 	params llm.GeneratePrParams,
 ) (string, error) {
-	client, err := genai.NewClient(ctx, nil)
+	client, err := p.getClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("generate client: %w", err)
 	}
@@ -112,7 +112,7 @@ func (p *provider) GeneratePr(
 		),
 	}
 
-	context := fmt.Sprintf(`**Base branch:** %s
+	prompt := fmt.Sprintf(`**Base branch:** %s
 **Head branch:** %s
 
 **Commit history:**
@@ -127,7 +127,7 @@ func (p *provider) GeneratePr(
 	result, err := client.Models.GenerateContent(
 		ctx,
 		p.model,
-		genai.Text(context),
+		genai.Text(prompt),
 		config,
 	)
 	if err != nil {
