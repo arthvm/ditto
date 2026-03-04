@@ -13,7 +13,7 @@ const (
 	All   CommitOption = "--all"
 )
 
-func CommitWithMessage(ctx context.Context, msg string, options ...CommitOption) error {
+func CommitWithMsg(ctx context.Context, msg string, options ...CommitOption) error {
 	args := make([]string, len(options))
 	for i, opt := range options {
 		args[i] = string(opt)

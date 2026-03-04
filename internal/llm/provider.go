@@ -9,28 +9,10 @@ import (
 
 var (
 	ErrNoProvider = errors.New("no provider for name")
-	ErrNoSupport  = errors.New("not supported with this model")
 )
 
-type GeneratePrParams struct {
-	HeadBranch        string
-	BaseBranch        string
-	Log               string
-	DiffStats         string
-	Template          string
-	Issues            []string
-	AdditionalContext string
-}
-
-type GenerateCommitParams struct {
-	Diff              string
-	Issues            []string
-	AdditionalContext string
-}
-
 type Provider interface {
-	GenerateCommitMessage(context.Context, GenerateCommitParams) (string, error)
-	GeneratePr(context.Context, GeneratePrParams) (string, error)
+	Generate(ctx context.Context, system, user string) (string, error)
 }
 
 var providers map[string]Provider

@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"os/exec"
 	"strings"
 )
 
@@ -34,12 +33,5 @@ func Diff(ctx context.Context, options ...DiffArg) (string, error) {
 	}
 	gitArgs := append([]string{"diff"}, args...)
 
-	cmd := exec.CommandContext(ctx, "git", gitArgs...)
-
-	res, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return string(res), nil
+	return run(ctx, gitArgs...)
 }

@@ -2,17 +2,13 @@ package git
 
 import (
 	"context"
-	"os/exec"
 	"strings"
 )
 
 func Root(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel")
-
-	res, err := cmd.Output()
+	res, err := run(ctx, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return "", err
 	}
-
-	return strings.TrimSpace(string(res)), nil
+	return strings.TrimSpace(res), nil
 }
