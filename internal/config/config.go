@@ -11,7 +11,6 @@ import (
 
 type Config struct {
 	Provider   string       `yaml:"provider"`
-	Model      string       `yaml:"model"`
 	BaseBranch string       `yaml:"base_branch"`
 	LLM        LLMConfig    `yaml:"llm"`
 	Commit     CommitConfig `yaml:"commit"`
@@ -61,6 +60,7 @@ type PRConfig struct {
 
 type GeminiConfig struct {
 	APIKey string `yaml:"api_key"`
+	Model  string `yaml:"model"`
 }
 
 type OllamaConfig struct {
@@ -68,11 +68,21 @@ type OllamaConfig struct {
 	Model string `yaml:"model"`
 }
 
+// SetModelForProvider sets the model on the currently active provider's config.
+// Used by CLI flag handling so --model overrides the right provider.
+func (c *Config) SetModelForProvider(model string) {
+	switch c.Provider {
+	case "ollama":
+		c.Ollama.Model = model
+	default:
+		c.Gemini.Model = model
+	}
+}
+
 func defaults() Config {
 	editTrue := true
 	return Config{
 		Provider:   "gemini",
-		Model:      "gemini-2.5-flash",
 		BaseBranch: "main",
 		LLM: LLMConfig{
 			Timeout: 2 * time.Minute,
@@ -82,6 +92,9 @@ func defaults() Config {
 		},
 		PR: PRConfig{
 			Edit: &editTrue,
+		},
+		Gemini: GeminiConfig{
+			Model: "gemini-2.5-flash",
 		},
 		Ollama: OllamaConfig{
 			Host:  "http://localhost:11434",
@@ -93,9 +106,9 @@ func defaults() Config {
 func Load(repoRoot string) (Config, error) {
 	cfg := defaults()
 
-	userDir, err := os.UserConfigDir()
+	home, err := os.UserHomeDir()
 	if err == nil {
-		userPath := filepath.Join(userDir, "ditto", "config.yaml")
+		userPath := filepath.Join(home, ".config", "ditto", "config.yaml")
 		if err := mergeFromFile(&cfg, userPath); err != nil {
 			return cfg, fmt.Errorf("user config: %w", err)
 		}
@@ -128,9 +141,6 @@ func mergeFromFile(cfg *Config, path string) error {
 func mergeFromEnv(cfg *Config) {
 	if v, ok := os.LookupEnv("DITTO_PROVIDER"); ok {
 		cfg.Provider = v
-	}
-	if v, ok := os.LookupEnv("DITTO_MODEL"); ok {
-		cfg.Model = v
 	}
 	if v, ok := os.LookupEnv("DITTO_BASE_BRANCH"); ok {
 		cfg.BaseBranch = v

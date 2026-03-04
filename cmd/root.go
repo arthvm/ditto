@@ -71,7 +71,8 @@ func setup(cmd *cobra.Command, _ []string) error {
 		cfg.Provider, _ = cmd.Flags().GetString(providerFlagName)
 	}
 	if cmd.Flags().Changed(modelFlagName) {
-		cfg.Model, _ = cmd.Flags().GetString(modelFlagName)
+		model, _ := cmd.Flags().GetString(modelFlagName)
+		cfg.SetModelForProvider(model)
 	}
 
 	appConfig = cfg
@@ -86,21 +87,13 @@ func setup(cmd *cobra.Command, _ []string) error {
 func buildProvider(cfg config.Config) (llm.Provider, error) {
 	switch {
 	case cfg.Provider == "ollama":
-		model := cfg.Ollama.Model
-		if cfg.Model != "" {
-			model = cfg.Model
-		}
-		return ollama.New(cfg.Ollama.Host, model, cfg.LLM.Temperature), nil
+		return ollama.New(cfg.Ollama.Host, cfg.Ollama.Model, cfg.LLM.Temperature), nil
 
 	case strings.HasPrefix(cfg.Provider, "gemini"):
 		if cfg.Gemini.APIKey != "" {
 			os.Setenv("GEMINI_API_KEY", cfg.Gemini.APIKey)
 		}
-		model := cfg.Model
-		if model == "" {
-			model = "gemini-2.5-flash"
-		}
-		return gemini.New(model, cfg.LLM.Temperature), nil
+		return gemini.New(cfg.Gemini.Model, cfg.LLM.Temperature), nil
 
 	default:
 		return nil, fmt.Errorf("unknown provider: %q", cfg.Provider)

@@ -53,9 +53,8 @@ Ditto also loads environment variables from a `.env` file in your project (via `
 Create `~/.config/ditto/config.yaml` for user-wide settings, or `.ditto.yaml` in a repo root for project-specific overrides. Both use the same format:
 
 ```yaml
-# Provider and model selection
+# Provider selection
 provider: gemini            # gemini (default), ollama
-model: gemini-2.5-flash     # model name for the selected provider
 
 # Base branch for PR diffs
 base_branch: main
@@ -79,9 +78,10 @@ pr:
   template_path: .github/pull_request_template.md  # custom PR template path
   edit: true                # open the editor before creating the PR (default: true)
 
-# Provider-specific settings
+# Provider-specific settings (each provider has its own model default)
 gemini:
   api_key: ""               # Gemini API key (alternative to GOOGLE_API_KEY env var)
+  model: gemini-2.5-flash   # default model for Gemini
 
 ollama:
   host: "http://localhost:11434"
@@ -97,7 +97,6 @@ ollama:
 | `OLLAMA_HOST` | Override the Ollama server URL (default: `http://localhost:11434`). |
 | `OLLAMA_MODEL` | Override the Ollama model name. |
 | `DITTO_PROVIDER` | Override the LLM provider. |
-| `DITTO_MODEL` | Override the model name. |
 | `DITTO_BASE_BRANCH` | Override the base branch for PR diffs. |
 | `DITTO_LLM_TIMEOUT` | Override the LLM timeout (e.g. `"2m"`). |
 | `DITTO_LLM_TEMPERATURE` | Override the LLM temperature. |
@@ -109,7 +108,7 @@ ollama:
 All commands accept these global flags:
 
 - `--provider`: select the LLM provider (`gemini`, `ollama`).
-- `--model`: override the model name for the selected provider.
+- `--model`: override the model for the active provider (e.g. `--provider gemini --model gemini-2.5-pro`).
 - `--prompt`: add extra natural-language context for the model.
 - `--issues`: repeatable flag for issue IDs; they show up in commit footers and PR bodies. Example: `--issues 123 --issues PROJ-42`.
 
@@ -172,12 +171,12 @@ The `--prompt` CLI flag provides **additional** context on top of the system pro
 
 ## Providers
 
-| Provider | Alias | Commit | PR | Notes |
-| --- | --- | --- | --- | --- |
-| Gemini | `gemini` (default) | Yes | Yes | Use `--model` to select a specific model (default: `gemini-2.5-flash`). Requires a Gemini API key. |
-| Ollama | `ollama` | Yes | Yes | Local Ollama server. Default model: `tavernari/git-commit-message`. |
+| Provider | Alias | Commit | PR | Default model | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Gemini | `gemini` (default) | Yes | Yes | `gemini-2.5-flash` | Requires a Gemini API key. |
+| Ollama | `ollama` | Yes | Yes | `tavernari/git-commit-message` | Local Ollama server. |
 
-Use `--model` to pick any model supported by your provider:
+Each provider has its own default model configured in its config section. Use `--model` to override on a per-invocation basis:
 
 ```sh
 ditto commit --provider gemini --model gemini-2.5-pro
