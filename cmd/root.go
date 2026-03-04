@@ -13,6 +13,7 @@ import (
 
 	"github.com/arthvm/ditto/internal/config"
 	"github.com/arthvm/ditto/internal/llm"
+	"github.com/arthvm/ditto/internal/llm/copilot"
 	"github.com/arthvm/ditto/internal/llm/gemini"
 	"github.com/arthvm/ditto/internal/llm/ollama"
 )
@@ -50,7 +51,7 @@ func init() {
 		String(promptFlagName, "", "Used to provide additional context to the model")
 
 	rootCmd.PersistentFlags().
-		String(providerFlagName, "", "LLM provider to use (gemini, ollama)")
+		String(providerFlagName, "", "LLM provider to use (gemini, ollama, copilot)")
 
 	rootCmd.PersistentFlags().
 		String(modelFlagName, "", "Model name to use with the selected provider")
@@ -88,6 +89,9 @@ func buildProvider(cfg config.Config) (llm.Provider, error) {
 	switch {
 	case cfg.Provider == "ollama":
 		return ollama.New(cfg.Ollama.Host, cfg.Ollama.Model, cfg.LLM.Temperature), nil
+
+	case cfg.Provider == "copilot":
+		return copilot.New(cfg.Copilot.Model, cfg.LLM.Temperature, cfg.Copilot.APIKey, cfg.Copilot.ClientID)
 
 	case strings.HasPrefix(cfg.Provider, "gemini"):
 		if cfg.Gemini.APIKey != "" {
