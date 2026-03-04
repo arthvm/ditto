@@ -21,10 +21,13 @@ func (g GitHub) FindPRTemplate(repoRoot, customPath string) (string, error) {
 			p = filepath.Join(repoRoot, p)
 		}
 		content, err := os.ReadFile(p)
-		if err != nil {
+		if err == nil {
+			return string(content), nil
+		}
+
+		if !os.IsNotExist(err) {
 			return "", fmt.Errorf("pr template: %w", err)
 		}
-		return string(content), nil
 	}
 
 	paths := []string{

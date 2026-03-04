@@ -91,7 +91,9 @@ func buildProvider(cfg config.Config) (llm.Provider, error) {
 
 	case strings.HasPrefix(cfg.Provider, "gemini"):
 		if cfg.Gemini.APIKey != "" {
-			os.Setenv("GEMINI_API_KEY", cfg.Gemini.APIKey)
+			if err := os.Setenv("GEMINI_API_KEY", cfg.Gemini.APIKey); err != nil {
+				return nil, fmt.Errorf("set GEMINI_API_KEY env var: %w", err)
+			}
 		}
 		return gemini.New(cfg.Gemini.Model, cfg.LLM.Temperature), nil
 
