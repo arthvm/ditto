@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-// generateTimeout bounds the LLM generation call. Interactive phases
-// (editor, gh pr create) run without a timeout so they can't be killed
-// by an expired deadline.
+// generateTimeout is the fallback used when no timeout is configured.
 const generateTimeout = 2 * time.Minute
 
 // Provider generates text from a system prompt and user prompt.

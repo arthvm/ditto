@@ -8,15 +8,21 @@ import (
 	"google.golang.org/genai"
 )
 
+// Provider implements workflow.Provider using the Google Gemini API.
+// The underlying client is lazily initialized on first Generate call.
 type Provider struct {
-	model      string
-	clientOnce sync.Once
-	client     *genai.Client
-	clientErr  error
+	model       string
+	temperature float32
+	clientOnce  sync.Once
+	client      *genai.Client
+	clientErr   error
 }
 
-func New(model string) *Provider {
-	return &Provider{model: model}
+// New creates a Gemini provider for the given model name
+// (e.g. "gemini-2.5-flash", "gemini-2.5-pro").
+// A temperature of 0 uses the model's default.
+func New(model string, temperature float32) *Provider {
+	return &Provider{model: model, temperature: temperature}
 }
 
 func (p *Provider) getClient(ctx context.Context) (*genai.Client, error) {
@@ -33,15 +39,18 @@ func (p *Provider) Generate(ctx context.Context, system, user string) (string, e
 		return "", fmt.Errorf("generate client: %w", err)
 	}
 
-	config := &genai.GenerateContentConfig{
+	cfg := &genai.GenerateContentConfig{
 		SystemInstruction: genai.NewContentFromText(system, genai.RoleUser),
+	}
+	if p.temperature != 0 {
+		cfg.Temperature = &p.temperature
 	}
 
 	result, err := client.Models.GenerateContent(
 		ctx,
 		p.model,
 		genai.Text(user),
-		config,
+		cfg,
 	)
 	if err != nil {
 		return "", err

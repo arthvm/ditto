@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/arthvm/ditto/internal/prompt"
 )
@@ -13,6 +14,8 @@ type CommitDeps struct {
 	VCS      VCS
 	Provider Provider
 	Progress Progress
+	// GenerateTimeout bounds the LLM call. Defaults to generateTimeout if zero.
+	GenerateTimeout time.Duration
 }
 
 type CommitParams struct {
@@ -44,7 +47,12 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 
 	deps.Progress.StartSpinner(" Generating commit message...")
 
-	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
+	timeout := deps.GenerateTimeout
+	if timeout == 0 {
+		timeout = generateTimeout
+	}
+
+	genCtx, genCancel := context.WithTimeout(ctx, timeout)
 	defer genCancel()
 
 	msg, err := deps.Provider.Generate(genCtx, system, user)

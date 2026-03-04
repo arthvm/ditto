@@ -8,21 +8,29 @@ import (
 	"net/http"
 )
 
+// Provider implements workflow.Provider using the Ollama local API.
 type Provider struct {
-	host  string
-	model string
+	host        string
+	model       string
+	temperature float32
 }
 
-func New(host, model string) *Provider {
-	return &Provider{host: host, model: model}
+// New creates an Ollama provider. A temperature of 0 uses the model's default.
+func New(host, model string, temperature float32) *Provider {
+	return &Provider{host: host, model: model, temperature: temperature}
+}
+
+type generateOptions struct {
+	Temperature float32 `json:"temperature,omitempty"`
 }
 
 type generateRequestBody struct {
-	Model  string `json:"model"`
-	System string `json:"system"`
-	Prompt string `json:"prompt"`
-	Stream bool   `json:"stream"`
-	Raw    bool   `json:"raw"`
+	Model   string          `json:"model"`
+	System  string          `json:"system"`
+	Prompt  string          `json:"prompt"`
+	Stream  bool            `json:"stream"`
+	Raw     bool            `json:"raw"`
+	Options generateOptions `json:"options,omitempty"`
 }
 
 type generateResponseBody struct {
@@ -33,11 +41,12 @@ func (p *Provider) Generate(ctx context.Context, system, user string) (string, e
 	url := fmt.Sprintf("%s/api/generate", p.host)
 
 	body := generateRequestBody{
-		Model:  p.model,
-		System: system,
-		Prompt: user,
-		Stream: false,
-		Raw:    false,
+		Model:   p.model,
+		System:  system,
+		Prompt:  user,
+		Stream:  false,
+		Raw:     false,
+		Options: generateOptions{Temperature: p.temperature},
 	}
 	bodyBuf := &bytes.Buffer{}
 

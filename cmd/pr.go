@@ -56,10 +56,11 @@ var prCmd = &cobra.Command{
 		}
 
 		return workflow.CreatePR(cmd.Context(), workflow.PRDeps{
-			VCS:      vcs.Git{},
-			Platform: platform.GitHub{},
-			Provider: provider,
-			Progress: ui.Default(),
+			VCS:             vcs.Git{},
+			Platform:        platform.GitHub{},
+			Provider:        provider,
+			Progress:        ui.Default(),
+			GenerateTimeout: appConfig.LLM.Timeout,
 		}, workflow.PRParams{
 			BaseBranch:        baseBranch,
 			HeadBranch:        headBranch,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/arthvm/ditto/internal/prompt"
 )
@@ -13,6 +14,8 @@ type PRDeps struct {
 	Platform Platform
 	Provider Provider
 	Progress Progress
+	// GenerateTimeout bounds the LLM call. Defaults to generateTimeout if zero.
+	GenerateTimeout time.Duration
 }
 
 type PRParams struct {
@@ -70,7 +73,12 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 
 	deps.Progress.StartSpinner(" Generating PR...")
 
-	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
+	timeout := deps.GenerateTimeout
+	if timeout == 0 {
+		timeout = generateTimeout
+	}
+
+	genCtx, genCancel := context.WithTimeout(ctx, timeout)
 	defer genCancel()
 
 	msg, err := deps.Provider.Generate(genCtx, system, user)

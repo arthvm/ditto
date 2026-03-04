@@ -43,9 +43,10 @@ var commitCmd = &cobra.Command{
 		}
 
 		return workflow.Commit(cmd.Context(), workflow.CommitDeps{
-			VCS:      vcs.Git{},
-			Provider: provider,
-			Progress: ui.Default(),
+			VCS:             vcs.Git{},
+			Provider:        provider,
+			Progress:        ui.Default(),
+			GenerateTimeout: appConfig.LLM.Timeout,
 		}, workflow.CommitParams{
 			Amend:             amend,
 			All:               all,

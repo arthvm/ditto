@@ -90,7 +90,7 @@ func buildProvider(cfg config.Config) (llm.Provider, error) {
 		if cfg.Model != "" {
 			model = cfg.Model
 		}
-		return ollama.New(cfg.Ollama.Host, model), nil
+		return ollama.New(cfg.Ollama.Host, model, cfg.LLM.Temperature), nil
 
 	case strings.HasPrefix(cfg.Provider, "gemini"):
 		if cfg.Gemini.APIKey != "" {
@@ -100,7 +100,7 @@ func buildProvider(cfg config.Config) (llm.Provider, error) {
 		if model == "" {
 			model = "gemini-2.5-flash"
 		}
-		return gemini.New(model), nil
+		return gemini.New(model, cfg.LLM.Temperature), nil
 
 	default:
 		return nil, fmt.Errorf("unknown provider: %q", cfg.Provider)
