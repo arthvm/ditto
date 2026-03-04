@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"os/exec"
 )
 
 type logArg interface {
@@ -22,12 +21,5 @@ func Log(ctx context.Context, options ...logArg) (string, error) {
 	}
 	gitArgs := append([]string{"log", "--pretty=format:%h %s%n%b%n"}, args...)
 
-	cmd := exec.CommandContext(ctx, "git", gitArgs...)
-
-	res, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return string(res), nil
+	return run(ctx, gitArgs...)
 }
