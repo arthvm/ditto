@@ -4,9 +4,7 @@ Copyright © 2025 Arthur Mariano
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -60,10 +58,7 @@ var prCmd = &cobra.Command{
 			return fmt.Errorf("get provider flag: %w", err)
 		}
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*5)
-		defer cancel()
-
-		return workflow.CreatePR(ctx, workflow.PRDeps{
+		return workflow.CreatePR(cmd.Context(), workflow.PRDeps{
 			VCS:      vcs.Git{},
 			Platform: platform.GitHub{},
 			Progress: ui.Default(),

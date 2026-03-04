@@ -49,7 +49,10 @@ func Commit(ctx context.Context, deps CommitDeps, params CommitParams) error {
 
 	deps.Progress.StartSpinner(" Generating commit message...")
 
-	msg, err := provider.Generate(ctx, system, user)
+	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
+	defer genCancel()
+
+	msg, err := provider.Generate(genCtx, system, user)
 
 	deps.Progress.StopSpinner()
 

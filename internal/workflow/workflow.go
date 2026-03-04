@@ -1,6 +1,14 @@
 package workflow
 
-import "context"
+import (
+	"context"
+	"time"
+)
+
+// generateTimeout bounds the LLM generation call. Interactive phases
+// (editor, gh pr create) run without a timeout so they can't be killed
+// by an expired deadline.
+const generateTimeout = 2 * time.Minute
 
 // Progress reports long-running operation status to the user.
 // Implementations control how progress is displayed: a CLI spinner,

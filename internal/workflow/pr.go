@@ -74,7 +74,10 @@ func CreatePR(ctx context.Context, deps PRDeps, params PRParams) error {
 
 	deps.Progress.StartSpinner(" Generating PR...")
 
-	msg, err := provider.Generate(ctx, system, user)
+	genCtx, genCancel := context.WithTimeout(ctx, generateTimeout)
+	defer genCancel()
+
+	msg, err := provider.Generate(genCtx, system, user)
 
 	deps.Progress.StopSpinner()
 

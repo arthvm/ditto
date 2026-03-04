@@ -4,9 +4,7 @@ Copyright © 2025 Arthur Mariano
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -49,10 +47,7 @@ var commitCmd = &cobra.Command{
 			return fmt.Errorf("get provider flag: %w", err)
 		}
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), time.Minute*3)
-		defer cancel()
-
-		return workflow.Commit(ctx, workflow.CommitDeps{
+		return workflow.Commit(cmd.Context(), workflow.CommitDeps{
 			VCS:      vcs.Git{},
 			Progress: ui.Default(),
 		}, workflow.CommitParams{
