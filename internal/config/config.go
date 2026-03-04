@@ -12,7 +12,12 @@ type Config struct {
 	Provider   string       `yaml:"provider"`
 	Model      string       `yaml:"model"`
 	BaseBranch string       `yaml:"base_branch"`
+	Gemini     GeminiConfig `yaml:"gemini"`
 	Ollama     OllamaConfig `yaml:"ollama"`
+}
+
+type GeminiConfig struct {
+	APIKey string `yaml:"api_key"`
 }
 
 type OllamaConfig struct {
@@ -76,6 +81,9 @@ func mergeFromEnv(cfg *Config) {
 	}
 	if v, ok := os.LookupEnv("DITTO_BASE_BRANCH"); ok {
 		cfg.BaseBranch = v
+	}
+	if v, ok := os.LookupEnv("GEMINI_API_KEY"); ok {
+		cfg.Gemini.APIKey = v
 	}
 	if v, ok := os.LookupEnv("OLLAMA_HOST"); ok {
 		cfg.Ollama.Host = v

@@ -93,6 +93,9 @@ func buildProvider(cfg config.Config) (llm.Provider, error) {
 		return ollama.New(cfg.Ollama.Host, model), nil
 
 	case strings.HasPrefix(cfg.Provider, "gemini"):
+		if cfg.Gemini.APIKey != "" {
+			os.Setenv("GEMINI_API_KEY", cfg.Gemini.APIKey)
+		}
 		model := cfg.Model
 		if model == "" {
 			model = "gemini-2.5-flash"
