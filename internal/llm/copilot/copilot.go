@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,13 +13,14 @@ import (
 const baseURL = "https://api.githubcopilot.com"
 
 // Provider implements workflow.Provider using the GitHub Copilot API.
-// It authenticates with a GitHub App token (ghu_) obtained via the
-// device flow or read from existing Copilot extension files, and
-// sends it directly to the OpenAI-compatible chat completions endpoint.
+// It authenticates with a GitHub OAuth token obtained via the device flow,
+// stored in the system keychain. If the token becomes invalid, it
+// re-authenticates automatically without user intervention.
 type Provider struct {
 	model       string
 	temperature float32
 	token       string
+	clientID    string
 }
 
 func New(model string, temperature float32, apiKey, clientID string) (*Provider, error) {
@@ -31,10 +33,31 @@ func New(model string, temperature float32, apiKey, clientID string) (*Provider,
 		model:       model,
 		temperature: temperature,
 		token:       token,
+		clientID:    clientID,
 	}, nil
 }
 
 func (p *Provider) Generate(ctx context.Context, system, user string) (string, error) {
+	result, err := p.generate(ctx, system, user)
+	if err == nil {
+		return result, nil
+	}
+
+	// On auth failure, clear the stored token and re-authenticate once.
+	if isAuthError(err) {
+		clearStoredToken()
+		newToken, authErr := runDeviceFlow(p.clientID)
+		if authErr != nil {
+			return "", fmt.Errorf("re-authentication failed: %w", authErr)
+		}
+		p.token = newToken
+		return p.generate(ctx, system, user)
+	}
+
+	return "", err
+}
+
+func (p *Provider) generate(ctx context.Context, system, user string) (string, error) {
 	body, err := p.buildRequest(system, user)
 	if err != nil {
 		return "", fmt.Errorf("build request: %w", err)
@@ -52,7 +75,13 @@ func (p *Provider) Generate(ctx context.Context, system, user string) (string, e
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return "", &authError{status: resp.StatusCode}
+	}
+
 	if resp.StatusCode != http.StatusOK {
+		// Read error is intentionally ignored: the status code is already
+		// informative and a body read failure would obscure the real error.
 		errBody, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("copilot api: status %d: %s", resp.StatusCode, errBody)
 	}
@@ -67,6 +96,18 @@ func (p *Provider) Generate(ctx context.Context, system, user string) (string, e
 	}
 
 	return chatResp.Choices[0].Message.Content, nil
+}
+
+type authError struct {
+	status int
+}
+
+func (e *authError) Error() string {
+	return fmt.Sprintf("copilot api: auth error (status %d)", e.status)
+}
+
+func isAuthError(err error) bool {
+	return errors.As(err, new(*authError))
 }
 
 func (p *Provider) setHeaders(req *http.Request) {
